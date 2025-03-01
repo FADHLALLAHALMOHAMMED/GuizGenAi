@@ -1,0 +1,182 @@
+-- MySQL Workbench Forward Engineering
+
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+
+-- -----------------------------------------------------
+-- Schema mydb
+-- -----------------------------------------------------
+-- -----------------------------------------------------
+-- Schema quizgenai
+-- -----------------------------------------------------
+
+-- -----------------------------------------------------
+-- Schema quizgenai
+-- -----------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS `quizgenai` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci ;
+USE `quizgenai` ;
+
+-- -----------------------------------------------------
+-- Table `quizgenai`.`students`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`students` (
+  `StudentID` INT NOT NULL AUTO_INCREMENT,
+  `FirstName` VARCHAR(32) NULL DEFAULT NULL,
+  `LastName` VARCHAR(32) NULL DEFAULT NULL,
+  `Points` INT NULL DEFAULT 0,
+  `lastLogin` DATETIME NULL DEFAULT now(),
+  `Email` VARCHAR(48) NOT NULL,
+  `password` VARCHAR(32) NULL DEFAULT NULL,
+  `PhoneNumber` VARCHAR(16) NOT NULL,
+  PRIMARY KEY (`StudentID`),
+  UNIQUE INDEX `Email` (`Email` ASC) VISIBLE,
+  UNIQUE INDEX `PhoneNumber` (`PhoneNumber` ASC) VISIBLE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 34
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `quizgenai`.`instructors`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`instructors` (
+  `instructorid` INT NOT NULL AUTO_INCREMENT,
+  `FirstName` VARCHAR(32) NULL DEFAULT NULL,
+  `LastName` VARCHAR(32) NULL DEFAULT NULL,
+  `Email` VARCHAR(48) NULL DEFAULT NULL,
+  `Password` VARCHAR(32) NULL DEFAULT NULL,
+  `PhoneNumber` VARCHAR(16) NULL DEFAULT NULL,
+  PRIMARY KEY (`instructorid`),
+  UNIQUE INDEX `Email` (`Email` ASC) VISIBLE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 30
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `quizgenai`.`quizzes`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`quizzes` (
+  `QuizID` INT NOT NULL AUTO_INCREMENT,
+  `Title` VARCHAR(64) NULL DEFAULT NULL,
+  `StartDateTime` DATETIME NULL DEFAULT NULL,
+  `EndDateTime` DATETIME NULL DEFAULT NULL,
+  `Instructor` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`QuizID`),
+  INDEX `Instructor` (`Instructor` ASC) VISIBLE,
+  CONSTRAINT `quizzes_ibfk_1`
+    FOREIGN KEY (`Instructor`)
+    REFERENCES `quizgenai`.`instructors` (`instructorid`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 10
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `quizgenai`.`questions`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`questions` (
+  `Questionid` INT NOT NULL AUTO_INCREMENT,
+  `QuestionText` VARCHAR(512) NULL DEFAULT NULL,
+  `AnswerChoice0` VARCHAR(256) NULL DEFAULT NULL,
+  `AnswerChoice1` VARCHAR(256) NULL DEFAULT NULL,
+  `AnswerChoice2` VARCHAR(256) NULL DEFAULT NULL,
+  `AnswerChoice3` VARCHAR(256) NULL DEFAULT NULL,
+  `CorrectAnswer` TINYINT NULL DEFAULT NULL,
+  `Quiz` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`Questionid`),
+  INDEX `Quiz` (`Quiz` ASC) VISIBLE,
+  CONSTRAINT `questions_ibfk_1`
+    FOREIGN KEY (`Quiz`)
+    REFERENCES `quizgenai`.`quizzes` (`QuizID`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 33
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `quizgenai`.`answers`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`answers` (
+  `Student` INT NULL DEFAULT NULL,
+  `Question` INT NULL DEFAULT NULL,
+  `AnswerChoice` INT NULL DEFAULT NULL,
+  INDEX `Student` (`Student` ASC) VISIBLE,
+  INDEX `Question` (`Question` ASC) VISIBLE,
+  CONSTRAINT `answers_ibfk_1`
+    FOREIGN KEY (`Student`)
+    REFERENCES `quizgenai`.`students` (`StudentID`),
+  CONSTRAINT `answers_ibfk_2`
+    FOREIGN KEY (`Question`)
+    REFERENCES `quizgenai`.`questions` (`Questionid`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `quizgenai`.`classes`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`classes` (
+  `ClassID` INT NOT NULL AUTO_INCREMENT,
+  `ClassName` VARCHAR(48) NULL DEFAULT NULL,
+  `Instructor` INT NULL DEFAULT NULL,
+  `classIconPath` VARCHAR(128) NULL DEFAULT NULL,
+  PRIMARY KEY (`ClassID`),
+  UNIQUE INDEX `ClassName` (`ClassName` ASC) VISIBLE,
+  INDEX `Instructor` (`Instructor` ASC) VISIBLE,
+  CONSTRAINT `classes_ibfk_1`
+    FOREIGN KEY (`Instructor`)
+    REFERENCES `quizgenai`.`instructors` (`instructorid`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 7
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `quizgenai`.`classes_quizzes`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`classes_quizzes` (
+  `Class` INT NULL DEFAULT NULL,
+  `Quiz` INT NULL DEFAULT NULL,
+  INDEX `Class` (`Class` ASC) VISIBLE,
+  INDEX `Quiz` (`Quiz` ASC) VISIBLE,
+  CONSTRAINT `classes_quizzes_ibfk_1`
+    FOREIGN KEY (`Class`)
+    REFERENCES `quizgenai`.`classes` (`ClassID`),
+  CONSTRAINT `classes_quizzes_ibfk_2`
+    FOREIGN KEY (`Quiz`)
+    REFERENCES `quizgenai`.`quizzes` (`QuizID`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `quizgenai`.`students_classes`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`students_classes` (
+  `Student` INT NULL DEFAULT NULL,
+  `Class` INT NULL DEFAULT NULL,
+  INDEX `Student` (`Student` ASC) VISIBLE,
+  INDEX `Class` (`Class` ASC) VISIBLE,
+  CONSTRAINT `students_classes_ibfk_1`
+    FOREIGN KEY (`Student`)
+    REFERENCES `quizgenai`.`students` (`StudentID`),
+  CONSTRAINT `students_classes_ibfk_2`
+    FOREIGN KEY (`Class`)
+    REFERENCES `quizgenai`.`classes` (`ClassID`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+SET SQL_MODE=@OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;

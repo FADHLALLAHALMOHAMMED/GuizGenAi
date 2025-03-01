@@ -1,1 +1,1 @@
-# GuizGenAI
+# GuizGenAi

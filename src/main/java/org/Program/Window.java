@@ -22,6 +22,9 @@ public class Window extends JFrame{
         this.setResizable(false);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.switchPage(new StartPage(this));
+        this.setVisible(true);
+        this.setLocationRelativeTo(null);
+
 //        this.switchPage(new TestPage(this));
 
 //        Date date = new Date(System.currentTimeMillis());

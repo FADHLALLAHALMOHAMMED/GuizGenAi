@@ -26,17 +26,35 @@ import static java.awt.GridBagConstraints.LINE_START;
  *  change the factory function that produces the buttons.
 * */
 public class GUI_Elements {
-    public final static Color buttonColor1 = new Color(0x28557a);
+    public final static Color buttonColor1 = new Color(44, 44, 44);
     public final static Dimension buttonSize1 = new Dimension(160, 50);
     public final static EmptyBorder buttonMargin1 = new EmptyBorder(20, 20, 20, 20);
+    public final static String TEXT_FONT = "Montserrat";
 
 
     public final static Dimension textFieldSize1 = new Dimension(300, 30);
 
+    public static JPanel panel() {
+
+        JPanel panel = new JPanel();
+        panel.setBackground(Page.APP_BACKGROUND);
+        
+        return panel;
+    }
+
+    public static JRadioButton radioButton(String text) {
+
+        JRadioButton button = new JRadioButton(text);
+        button.setBackground(Page.APP_BACKGROUND);
+        button.setForeground(Page.TEXT_FOREGROUND);
+
+        return button;
+    }
+
     public static JLabel label(String text) {
         JLabel label = new JLabel(text);
-        label.setFont(new Font("Times New Roman", Font.ITALIC, 30));
-        label.setBorder(new EmptyBorder(40, 50, 40, 50));
+        label.setFont(new Font(GUI_Elements.TEXT_FONT, Font.BOLD, 14));
+        label.setForeground(new Color(255, 255, 255));
         return label;
     }
 
@@ -50,7 +68,7 @@ public class GUI_Elements {
         JButton button = new JButton(text);
 
         // aesthetics
-        button.setForeground(new Color(0xffffff));
+        button.setForeground(new Color(255,255,255));
         button.setBackground(buttonColor1);
         button.setPreferredSize(buttonSize1);
         button.setBorder(buttonMargin1);
@@ -58,6 +76,7 @@ public class GUI_Elements {
 
         return button;
     }
+    
 }
 
 /** this file also includes components that extend Swing components.

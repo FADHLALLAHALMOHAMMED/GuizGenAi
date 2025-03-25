@@ -3,7 +3,7 @@ package org.Program;
 public class Constants {
     public static final String databaseURL = "jdbc:mysql://localhost:3306/QuizGenAI";
     public static final String user = "root";
-    public static final String password = "system";
+    public static final String password = "fadil";
     public static final String gemini_api_key = "AIzaSyAX_IwhPDo99uCv6RR_7FMBjGSAqO5z7tU";
     public static final String huggingFaceAPIKey = "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";
     public static final String template = """

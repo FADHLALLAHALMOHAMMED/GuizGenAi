@@ -29,7 +29,6 @@ public class GUI_Elements {
     public final static Color buttonColor1 = new Color(44, 44, 44);
     public final static Dimension buttonSize1 = new Dimension(160, 50);
     public final static EmptyBorder buttonMargin1 = new EmptyBorder(20, 20, 20, 20);
-    public final static String TEXT_FONT = "Montserrat";
 
 
     public final static Dimension textFieldSize1 = new Dimension(300, 30);
@@ -38,6 +37,16 @@ public class GUI_Elements {
 
         JPanel panel = new JPanel();
         panel.setBackground(Page.APP_BACKGROUND);
+        panel.setForeground(Page.TEXT_FOREGROUND);
+        
+        return panel;
+    }
+
+    public static JPanel panel(LayoutManager layout) {
+
+        JPanel panel = new JPanel(layout);
+        panel.setBackground(Page.APP_BACKGROUND);
+        panel.setForeground(Page.TEXT_FOREGROUND);
         
         return panel;
     }
@@ -53,7 +62,7 @@ public class GUI_Elements {
 
     public static JLabel label(String text) {
         JLabel label = new JLabel(text);
-        label.setFont(new Font(GUI_Elements.TEXT_FONT, Font.BOLD, 14));
+        label.setFont(new Font(Page.TEXT_FONT, Font.BOLD, 14));
         label.setForeground(new Color(255, 255, 255));
         return label;
     }

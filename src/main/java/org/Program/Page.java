@@ -2,6 +2,7 @@ package org.Program;
 
 import org.Program.Entities.*;
 import org.Program.Entities.Class;
+import org.bouncycastle.asn1.dvcs.Data;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -11,6 +12,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.image.DataBuffer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -30,6 +32,7 @@ public abstract class Page extends JPanel implements ActionListener {
     Window window;
     public static Color APP_BACKGROUND = new Color(118, 39, 255);
     public static Color TEXT_FOREGROUND = new Color(255, 255, 255);
+    public static Color SECONDARY_BACKGROUND = new Color(255, 247, 209);
     public final static String TEXT_FONT = "Montserrat";
     // private ArrayList<JPanel> panelsList = new ArrayList<>();
     private final Icon appImage = new ImageIcon(getClass().getResource("images/app_name.png"));
@@ -46,7 +49,8 @@ public abstract class Page extends JPanel implements ActionListener {
 
 
         // Header panel ------------------------------------------------------------------------------
-        headerPanel = GUI_Elements.panel(new BorderLayout());
+        headerPanel = GUI_Elements.panel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
         headerPanel.setBackground(APP_BACKGROUND);
 
         // managing app_name image
@@ -55,8 +59,6 @@ public abstract class Page extends JPanel implements ActionListener {
         
         Icon scaledAppImg = new ImageIcon(img);
         appImageLabel = new JLabel(scaledAppImg);
-        appImageLabel.setBorder(BorderFactory.createEmptyBorder(23, 23, 10, 10));
-
 
         // managing the 'logout' label
         if (this instanceof StartPage || this instanceof RegisterPage || this instanceof LoginPage) {
@@ -68,7 +70,6 @@ public abstract class Page extends JPanel implements ActionListener {
             logoutButton.setFont(new Font(Page.TEXT_FONT, Font.BOLD, 20));
             logoutButton.setBackground(APP_BACKGROUND);
             logoutButton.setForeground(Color.RED);
-            logoutButton.setBorder(BorderFactory.createEmptyBorder(23, 0, 10, 23));
 
             logoutButton.setFocusPainted(false);
             logoutButton.setBorderPainted(false);
@@ -85,19 +86,31 @@ public abstract class Page extends JPanel implements ActionListener {
                 }
             });
 
-            
-            headerPanel.add(logoutButton, BorderLayout.EAST);
         }
-
-
+        
+        
         
         // Content panel ----------------------------------------------------------------------------
-
-        contentPanel = GUI_Elements.panel();
+        
+        contentPanel = GUI_Elements.panel(new GridBagLayout());
         contentPanel.setBackground(APP_BACKGROUND);
-
+        
         // Grid manager -----------------------------------------------------------------------------
-        headerPanel.add(appImageLabel, BorderLayout.WEST);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(23, 23, 23, 23);
+        headerPanel.add(appImageLabel, gbc);
+        gbc.gridx++;
+        gbc.anchor = GridBagConstraints.EAST;
+        
+        if (! (this instanceof StartPage || this instanceof RegisterPage || this instanceof LoginPage)) {
+            headerPanel.add(logoutButton, gbc);
+        }
 
         this.add(headerPanel, BorderLayout.NORTH);
         this.add(contentPanel, BorderLayout.CENTER);
@@ -414,7 +427,10 @@ class InstructorHomePage extends Page {
 
     private final JLabel homePageLabel;
     private final JLabel descriptionLabel;
-
+    private final JPanel cardsPanel;
+    private final JScrollPane cardsScrollPane;
+    
+    private final JPanel buttonsPanel;
     private final JButton newClassButton;
     private final JButton generateQuizButton;
     private final JButton logoutButton = null;
@@ -422,29 +438,91 @@ class InstructorHomePage extends Page {
     InstructorHomePage(Window window) {
 
         super(window);
-        contentPanel.setLayout(new BorderLayout());
-
+        contentPanel.setLayout(new GridBagLayout());
         
         homePageLabel = GUI_Elements.label("Instructor Home Page");
-
+        
         descriptionLabel = new JLabel(String.format(
             "Welcome, %s %s, to QuizGenAI",
-             window.getUser().firstName, window.getUser().lastName
+            window.getUser().firstName, window.getUser().lastName
             )
         );
 
+
+        //Classes Panel ------------------------------------------------------------------------------
+        cardsPanel = GUI_Elements.panel(new GridBagLayout());
+
+        GridBagConstraints cardsConstraints = new GridBagConstraints();
+        cardsConstraints.fill = GridBagConstraints.NONE;
+        cardsConstraints.insets = new Insets(10, 10, 10, 10);
+
+        int columns = 4; // num of cards per row
+        Dimension cardSize = new Dimension(250, 200);
+        
+        
+        int instructorId = window.getUser().id;
+        Vector<Class> classes = Database.getInstructorClasses(instructorId);
+        
+        for (int i = 0; i < classes.size(); i++) {
+
+            
+            ClassPanel classPanel = new ClassPanel(classes.get(i));
+            classPanel.setPreferredSize(cardSize);
+            classPanel.setBackground(Page.SECONDARY_BACKGROUND);
+            classPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            
+            cardsConstraints.gridx = i % columns;
+            cardsConstraints.gridy = i / columns;
+
+            cardsPanel.add(classPanel, cardsConstraints);
+        }
+
+
+        // classes pane
+        cardsScrollPane = new JScrollPane(cardsPanel);
+        cardsScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        cardsScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        
+        // Buttons panel ---------------------------------------------------------------------------------------
+        buttonsPanel = GUI_Elements.panel(new GridBagLayout());
+        
         newClassButton = GUI_Elements.button("Create new class");
         generateQuizButton = GUI_Elements.button("Generate quiz");
         
+        newClassButton.addActionListener(this);
+        generateQuizButton.addActionListener(this);
+        
+
+        // Grid manager
+        GridBagConstraints homeConstraints = new GridBagConstraints();
+        GridBagConstraints buttonsConstraints = new GridBagConstraints();
+        homeConstraints.gridx = 0;
+        homeConstraints.gridy = 0;
+        homeConstraints.fill = GridBagConstraints.BOTH;
+        buttonsConstraints.gridx = 0;
+        buttonsConstraints.gridy = 0;
+        buttonsConstraints.fill = GridBagConstraints.HORIZONTAL;
+    
         
         
+        buttonsConstraints.weightx = 1.0;
+        buttonsConstraints.weighty = 1.0;
+        buttonsConstraints.insets = new Insets(10, 23, 23, 10);
+        buttonsPanel.add(newClassButton, buttonsConstraints);
+
+        buttonsConstraints.insets = new Insets(10, 10, 23, 23);
+        buttonsConstraints.gridx++;
+        buttonsPanel.add(generateQuizButton, buttonsConstraints);
         
-        
-        
-        
-        
-        
-        
+        homeConstraints.insets = new Insets(23, 23, 23, 23);
+
+        homeConstraints.weighty = 2.0;
+        homeConstraints.weightx = 1.0;
+        contentPanel.add(cardsScrollPane, homeConstraints);
+        homeConstraints.gridy++;
+        homeConstraints.weightx = 1.0;
+        homeConstraints.weighty = 1.0;
+        contentPanel.add(buttonsPanel, homeConstraints);
         
         
         

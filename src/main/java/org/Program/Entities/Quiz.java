@@ -8,13 +8,13 @@ public class Quiz {
     public String title;
     public Date startDateTime;
     public Date endDateTime;
-    public int InstructorId;
+    public int instructorId;
     public Vector<Question> questions;
     public Quiz(int id, String title, Date startDateTime, Date endDateTime, int instructorId) {
         this.id = id;
         this.title = title;
         this.startDateTime = startDateTime;
         this.endDateTime = endDateTime;
-        InstructorId = instructorId;
+        this.instructorId = instructorId;
     }
 }

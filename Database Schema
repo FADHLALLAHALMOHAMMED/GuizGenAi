@@ -18,27 +18,6 @@ CREATE SCHEMA IF NOT EXISTS `quizgenai` DEFAULT CHARACTER SET utf8mb4 COLLATE ut
 USE `quizgenai` ;
 
 -- -----------------------------------------------------
--- Table `quizgenai`.`students`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `quizgenai`.`students` (
-  `StudentID` INT NOT NULL AUTO_INCREMENT,
-  `FirstName` VARCHAR(32) NULL DEFAULT NULL,
-  `LastName` VARCHAR(32) NULL DEFAULT NULL,
-  `Points` INT NULL DEFAULT '0',
-  `lastLogin` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
-  `Email` VARCHAR(48) NOT NULL,
-  `password` VARCHAR(32) NULL DEFAULT NULL,
-  `PhoneNumber` VARCHAR(16) NOT NULL,
-  PRIMARY KEY (`StudentID`),
-  UNIQUE INDEX `Email` (`Email` ASC) VISIBLE,
-  UNIQUE INDEX `PhoneNumber` (`PhoneNumber` ASC) VISIBLE)
-ENGINE = InnoDB
-AUTO_INCREMENT = 64
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_0900_ai_ci;
-
-
--- -----------------------------------------------------
 -- Table `quizgenai`.`instructors`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `quizgenai`.`instructors` (
@@ -52,69 +31,6 @@ CREATE TABLE IF NOT EXISTS `quizgenai`.`instructors` (
   UNIQUE INDEX `Email` (`Email` ASC) VISIBLE)
 ENGINE = InnoDB
 AUTO_INCREMENT = 41
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_0900_ai_ci;
-
-
--- -----------------------------------------------------
--- Table `quizgenai`.`quizzes`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `quizgenai`.`quizzes` (
-  `QuizID` INT NOT NULL AUTO_INCREMENT,
-  `Title` VARCHAR(64) NULL DEFAULT NULL,
-  `StartDateTime` DATETIME NULL DEFAULT NULL,
-  `EndDateTime` DATETIME NULL DEFAULT NULL,
-  `Instructor` INT NULL DEFAULT NULL,
-  PRIMARY KEY (`QuizID`),
-  INDEX `Instructor` (`Instructor` ASC) VISIBLE,
-  CONSTRAINT `quizzes_ibfk_1`
-    FOREIGN KEY (`Instructor`)
-    REFERENCES `quizgenai`.`instructors` (`instructorid`))
-ENGINE = InnoDB
-AUTO_INCREMENT = 11
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_0900_ai_ci;
-
-
--- -----------------------------------------------------
--- Table `quizgenai`.`questions`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `quizgenai`.`questions` (
-  `Questionid` INT NOT NULL AUTO_INCREMENT,
-  `QuestionText` VARCHAR(512) NULL DEFAULT NULL,
-  `AnswerChoice0` VARCHAR(256) NULL DEFAULT NULL,
-  `AnswerChoice1` VARCHAR(256) NULL DEFAULT NULL,
-  `AnswerChoice2` VARCHAR(256) NULL DEFAULT NULL,
-  `AnswerChoice3` VARCHAR(256) NULL DEFAULT NULL,
-  `CorrectAnswer` TINYINT NULL DEFAULT NULL,
-  `Quiz` INT NULL DEFAULT NULL,
-  PRIMARY KEY (`Questionid`),
-  INDEX `Quiz` (`Quiz` ASC) VISIBLE,
-  CONSTRAINT `questions_ibfk_1`
-    FOREIGN KEY (`Quiz`)
-    REFERENCES `quizgenai`.`quizzes` (`QuizID`))
-ENGINE = InnoDB
-AUTO_INCREMENT = 38
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_0900_ai_ci;
-
-
--- -----------------------------------------------------
--- Table `quizgenai`.`answers`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `quizgenai`.`answers` (
-  `Student` INT NULL DEFAULT NULL,
-  `Question` INT NULL DEFAULT NULL,
-  `AnswerChoice` INT NULL DEFAULT NULL,
-  INDEX `Student` (`Student` ASC) VISIBLE,
-  INDEX `Question` (`Question` ASC) VISIBLE,
-  CONSTRAINT `answers_ibfk_1`
-    FOREIGN KEY (`Student`)
-    REFERENCES `quizgenai`.`students` (`StudentID`),
-  CONSTRAINT `answers_ibfk_2`
-    FOREIGN KEY (`Question`)
-    REFERENCES `quizgenai`.`questions` (`Questionid`))
-ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
 
@@ -140,6 +56,43 @@ COLLATE = utf8mb4_0900_ai_ci;
 
 
 -- -----------------------------------------------------
+-- Table `quizgenai`.`embeddings`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`embeddings` (
+  `hash` VARCHAR(44) NOT NULL,
+  `embeddings` JSON NULL DEFAULT NULL,
+  PRIMARY KEY (`hash`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `quizgenai`.`quizzes`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`quizzes` (
+  `QuizID` INT NOT NULL AUTO_INCREMENT,
+  `Title` VARCHAR(64) NULL DEFAULT NULL,
+  `StartDateTime` DATETIME NULL DEFAULT NULL,
+  `EndDateTime` DATETIME NULL DEFAULT NULL,
+  `Instructor` INT NULL DEFAULT NULL,
+  `embeddings` VARCHAR(44) NULL DEFAULT NULL,
+  PRIMARY KEY (`QuizID`),
+  INDEX `Instructor` (`Instructor` ASC) VISIBLE,
+  INDEX `embeddings` (`embeddings` ASC) VISIBLE,
+  CONSTRAINT `quizzes_ibfk_1`
+    FOREIGN KEY (`Instructor`)
+    REFERENCES `quizgenai`.`instructors` (`instructorid`),
+  CONSTRAINT `quizzes_ibfk_2`
+    FOREIGN KEY (`embeddings`)
+    REFERENCES `quizgenai`.`embeddings` (`hash`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 24
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
 -- Table `quizgenai`.`classes_quizzes`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `quizgenai`.`classes_quizzes` (
@@ -159,13 +112,118 @@ COLLATE = utf8mb4_0900_ai_ci;
 
 
 -- -----------------------------------------------------
+-- Table `quizgenai`.`students`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`students` (
+  `StudentID` INT NOT NULL AUTO_INCREMENT,
+  `FirstName` VARCHAR(32) NULL DEFAULT NULL,
+  `LastName` VARCHAR(32) NULL DEFAULT NULL,
+  `Points` INT NULL DEFAULT '0',
+  `lastLogin` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `Email` VARCHAR(48) NOT NULL,
+  `password` VARCHAR(32) NULL DEFAULT NULL,
+  `PhoneNumber` VARCHAR(16) NOT NULL,
+  PRIMARY KEY (`StudentID`),
+  UNIQUE INDEX `Email` (`Email` ASC) VISIBLE,
+  UNIQUE INDEX `PhoneNumber` (`PhoneNumber` ASC) VISIBLE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 64
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `quizgenai`.`submissions`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`submissions` (
+  `SubmissionId` INT NOT NULL AUTO_INCREMENT,
+  `timeSubmitted` DATETIME NULL DEFAULT NULL,
+  `quiz` INT NULL DEFAULT NULL,
+  `student` INT NULL DEFAULT NULL,
+  `fullMark` INT NULL DEFAULT NULL,
+  `studentmark` INT NULL DEFAULT (-1),
+  PRIMARY KEY (`SubmissionId`),
+  UNIQUE INDEX `auto_Increment` (`SubmissionId` ASC) VISIBLE,
+  INDEX `quiz` (`quiz` ASC) VISIBLE,
+  INDEX `student` (`student` ASC) VISIBLE,
+  CONSTRAINT `submissions_ibfk_1`
+    FOREIGN KEY (`quiz`)
+    REFERENCES `quizgenai`.`quizzes` (`QuizID`),
+  CONSTRAINT `submissions_ibfk_2`
+    FOREIGN KEY (`student`)
+    REFERENCES `quizgenai`.`students` (`StudentID`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 21
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `quizgenai`.`questions`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`questions` (
+  `Questionid` INT NOT NULL AUTO_INCREMENT,
+  `QuestionText` VARCHAR(512) NULL DEFAULT NULL,
+  `Quiz` INT NULL DEFAULT NULL,
+  `QuestionOrder` INT NULL DEFAULT NULL,
+  `QuestionType` ENUM('MCQ', 'essay') NOT NULL,
+  PRIMARY KEY (`Questionid`),
+  UNIQUE INDEX `Questionid` (`Questionid` ASC, `QuestionOrder` ASC) VISIBLE,
+  INDEX `Quiz` (`Quiz` ASC) VISIBLE,
+  CONSTRAINT `questions_ibfk_1`
+    FOREIGN KEY (`Quiz`)
+    REFERENCES `quizgenai`.`quizzes` (`QuizID`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 92
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `quizgenai`.`essayquestions`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`essayquestions` (
+  `Question` INT NOT NULL,
+  `ModelAnswer` VARCHAR(512) NULL DEFAULT NULL,
+  PRIMARY KEY (`Question`),
+  CONSTRAINT `essayquestions_ibfk_1`
+    FOREIGN KEY (`Question`)
+    REFERENCES `quizgenai`.`questions` (`Questionid`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `quizgenai`.`essayanswers`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`essayanswers` (
+  `Question` INT NULL DEFAULT NULL,
+  `answerText` VARCHAR(1024) NULL DEFAULT NULL,
+  `submission` INT NULL DEFAULT NULL,
+  `justification` VARCHAR(512) NULL DEFAULT NULL,
+  `grade` ENUM('<full credit>', '<partial credit>', '<no credit>', '<ungraded>') NULL DEFAULT '<ungraded>',
+  INDEX `submission` (`submission` ASC) VISIBLE,
+  INDEX `Question` (`Question` ASC) VISIBLE,
+  CONSTRAINT `essayanswers_ibfk_2`
+    FOREIGN KEY (`submission`)
+    REFERENCES `quizgenai`.`submissions` (`SubmissionId`),
+  CONSTRAINT `essayanswers_ibfk_3`
+    FOREIGN KEY (`Question`)
+    REFERENCES `quizgenai`.`essayquestions` (`Question`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
 -- Table `quizgenai`.`feedback`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `quizgenai`.`feedback` (
   `Instructor` INT NULL DEFAULT NULL,
   `Student` INT NULL DEFAULT NULL,
   `SubjectLine` VARCHAR(128) NULL DEFAULT NULL,
-  `MessageText` VARCHAR(256) NULL DEFAULT NULL,
+  `MessageText` VARCHAR(1024) NULL DEFAULT NULL,
   `DateTimeSent` DATETIME NULL DEFAULT NULL,
   INDEX `Instructor` (`Instructor` ASC) VISIBLE,
   INDEX `Student` (`Student` ASC) VISIBLE,
@@ -175,6 +233,45 @@ CREATE TABLE IF NOT EXISTS `quizgenai`.`feedback` (
   CONSTRAINT `feedback_ibfk_2`
     FOREIGN KEY (`Student`)
     REFERENCES `quizgenai`.`students` (`StudentID`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `quizgenai`.`mcquestions`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`mcquestions` (
+  `Question` INT NOT NULL,
+  `AnswerChoice0` VARCHAR(128) NOT NULL,
+  `AnswerChoice1` VARCHAR(128) NOT NULL,
+  `AnswerChoice2` VARCHAR(128) NOT NULL,
+  `AnswerChoice3` VARCHAR(128) NOT NULL,
+  `CorrectAnswer` TINYINT NOT NULL,
+  PRIMARY KEY (`Question`),
+  CONSTRAINT `mcquestions_ibfk_1`
+    FOREIGN KEY (`Question`)
+    REFERENCES `quizgenai`.`questions` (`Questionid`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `quizgenai`.`mcanswers`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`mcanswers` (
+  `submission` INT NULL DEFAULT NULL,
+  `selectedAnswer` INT NULL DEFAULT NULL,
+  `question` INT NULL DEFAULT NULL,
+  INDEX `submission` (`submission` ASC) VISIBLE,
+  INDEX `question` (`question` ASC) VISIBLE,
+  CONSTRAINT `mcanswers_ibfk_1`
+    FOREIGN KEY (`submission`)
+    REFERENCES `quizgenai`.`submissions` (`SubmissionId`),
+  CONSTRAINT `mcanswers_ibfk_2`
+    FOREIGN KEY (`question`)
+    REFERENCES `quizgenai`.`mcquestions` (`Question`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
@@ -223,48 +320,3 @@ COLLATE = utf8mb4_0900_ai_ci;
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
-
-use QuizGenAI;
-INSERT INTO students (FirstName, LastName, email, password, PhoneNumber) VALUES 
-("Amir", "Abadi", "Amir@gmail.com", "Amir123", "0505000001"), 
-("Abbas", "Abaza", "Abbas@gmail.com", "Abbas123", "0505000002"), 
-("Ali", "Abdulla", "Ali@gmail.com", "Ali123", "0505000003"),
-("Ahmad", "Abulafia", "Ahmad@gmail.com", "Ahmad123", "0505000004"),
-("Omar", "Ahmad", "Omar@gmail.com", "Omar123", "0505000005"),
-("Abdulla", "Ali", "Abdulla@gmail.com", "Abdulla123", "0505000006"),
-("Fahad", "Amin", "Fahad@gmail.com", "Fahad123", "0505000007"),
-("Faisal", "Asghar", "Faisal@gmail.com", "Faisal123", "0505000008"),
-("Ibrahim", "Ayad", "Ibrahim@gmail.com", "Ibrahim123", "0505000009"),
-("Mohammed", "Barakat", "Mohammed@gmail.com", "Mohammed123", "0505000010"),
-("Hassan", "Darwish", "Hassan@gmail.com", "Hassan123", "0505000011"),
-("Yousef", "Elamin", "Yousef@gmail.com", "Yousef123", "0505000012"),
-("Tariq", "Fouad", "Tariq@gmail.com", "Tariq123", "0505000013"),
-("Salman", "Gamal", "Salman@gmail.com", "Salman123", "0505000014"),
-("Khalid", "Haddad", "Khalid@gmail.com", "Khalid123", "0505000015"),
-("Walid", "Ismail", "Walid@gmail.com", "Walid123", "0505000016"),
-("Nasser", "Jabbar", "Nasser@gmail.com", "Nasser123", "0505000017"),
-("Sami", "Karim", "Sami@gmail.com", "Sami123", "0505000018"),
-("Rami", "Luqman", "Rami@gmail.com", "Rami123", "0505000019"),
-("Saad", "Mahmoud", "Saad@gmail.com", "Saad123", "0505000020"),
-("Zaid", "Naji", "Zaid@gmail.com", "Zaid123", "0505000021"),
-("Hadi", "Omar", "Hadi@gmail.com", "Hadi123", "0505000022"),
-("Bilal", "Qassem", "Bilal@gmail.com", "Bilal123", "0505000023"),
-("Jamal", "Rashid", "Jamal@gmail.com", "Jamal123", "0505000024"),
-("Bassam", "Sami", "Bassam@gmail.com", "Bassam123", "0505000025"),
-("Fadi", "Tamer", "Fadi@gmail.com", "Fadi123", "0505000026"),
-("Othman", "Umar", "Othman@gmail.com", "Othman123", "0505000027"),
-("Kareem", "Waheed", "Kareem@gmail.com", "Kareem123", "0505000028"),
-("Sameer", "Yahya", "Sameer@gmail.com", "Sameer123", "0505000029"),
-("Nasir", "Zafar", "Nasir@gmail.com", "Nasir123", "0505000030");
-
-INSERT INTO instructors (FirstName, LastName, Email, Password, PhoneNumber) VALUES
-("Musa", "Zayani", "Musa@gmail.com", "Musa123", "0505000031"),
-("Jad", "Hani", "Jad@gmail.com", "Jad123", "0505000032"),
-("Adnan", "Shafiq", "Adnan@gmail.com", "Adnan123", "0505000033"),
-("Majed", "Hassan", "Majed@gmail.com", "Majed123", "0505000034"),
-("Samir", "Mansour", "Samir@gmail.com", "Samir123", "0505000035"),
-("Tamer", "Qasim", "Tamer@gmail.com", "Tamer123", "0505000036"),
-("Khalil", "Rahman", "Khalil@gmail.com", "Khalil123", "0505000037"),
-("Faris", "Suleiman", "Faris@gmail.com", "Faris123", "0505000038"),
-("Rashid", "Taleb", "Rashid@gmail.com", "Rashid123", "0505000039"),
-("Ilyas", "Uthman", "Ilyas@gmail.com", "Ilyas123", "0505000040");

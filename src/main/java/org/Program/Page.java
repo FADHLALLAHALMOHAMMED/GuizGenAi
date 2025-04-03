@@ -734,21 +734,26 @@ class TestPage extends Page {
 }
 
 class CreateNewClassPage extends Page{
+
+
     String iconFilePath = "DefaultImages\\DefaultClassIcon.png";
     JLabel selectedIconLabel = new JLabel();
     JTextField classnameTextField = GUI_Elements.textField();
     JButton createClassButton = GUI_Elements.button("Create Class");
     JButton selectIconButton = GUI_Elements.button("Select Class Icon");
     JButton cancelButton = GUI_Elements.button("Cancel");
+
+
     CreateNewClassPage(Window window){
+
         super(window);
-        this.setLayout(new GridBagLayout());
+        contentPanel.setLayout(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = 0; c.gridy = 0; c.gridwidth= 2;
         c.anchor = GridBagConstraints.LINE_START;
         c.insets = new Insets(20, 10, 20, 10);
 
-        this.add(GUI_Elements.label("Create New Class"), c);
+        contentPanel.add(GUI_Elements.label("Create New Class"), c);
 
         // class name Panel
         JPanel classNamePanel = GUI_Elements.panel(new GridBagLayout());
@@ -761,9 +766,9 @@ class CreateNewClassPage extends Page{
         classNamePanel.add(classnameTextField, c);
 
         c.gridx = 0; c.gridy = 1;  c.gridwidth= 2;
-        this.add(classNamePanel, c); c.gridy++;
-        this.add(selectIconButton, c); c.gridx++;
-        this.add(selectedIconLabel, c);
+        contentPanel.add(classNamePanel, c); c.gridy++;
+        contentPanel.add(selectIconButton, c); c.gridx++;
+        contentPanel.add(selectedIconLabel, c);
 
         selectIconButton.addActionListener(this);
 
@@ -781,8 +786,8 @@ class CreateNewClassPage extends Page{
         buttonPanel.add(cancelButton, c);
 
         c.gridwidth = 2; c.gridx = 0; c.gridy = 3;
-        this.add(buttonPanel, c);
-        this.setVisible(true);
+        contentPanel.add(buttonPanel, c);
+        contentPanel.setVisible(true);
     }
 
     @Override

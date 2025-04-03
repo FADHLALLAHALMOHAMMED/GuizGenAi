@@ -427,12 +427,14 @@ class EditQuizScrollPane extends JScrollPane{
 
 // displays the information for a single class, including ID, name, and icon.
 class ClassPanel extends JPanel{
+
     Class class_;
-    ClassPanel(Class class_){
+
+    ClassPanel(Class class_) {
+
         super(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = 0; c.gridy = 0; c.anchor = CENTER;
-        this.setBackground(new Color(64, 128, 192));
         this.setBorder(new EmptyBorder(20, 40, 20, 40));
 
         this.class_ = class_;

@@ -7,6 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Vector;
 
@@ -174,7 +175,7 @@ public class HelperFunctions {
                 c = b;  // set c to equal b (the last confirmed safe index to add new line)
                 str.setCharAt(c, '\n'); // add new line at b (which is also b in this case)
             }
-            b = a;  // if a - c > maxCharsPerLine -> it is safe to insert \n char at a, so store it in b.
+            b = a;  // if a - c > maxCharsPerLine -> it is safe to insert \n char at 'a', so store it in b.
             a = str.indexOf(" ", b+1); // take one more step.
         }
 
@@ -259,7 +260,7 @@ public class HelperFunctions {
      *  2. grades the mcq questions. and stores the overall result: how many answers correct over how many questions total.
      *  3. create a formatted string that containing all the essay questions and answers and grading instruction for the LLM.
      *  4. pass the string along with the hash of the quiz to the LLM in the QuizGen class
-     *  5. parses the LLM's reply and updates essayQuestion objects with the grades and justifications for the grades.
+     *  5. parses the LLMs reply and updates essayQuestion objects with the grades and justifications for the grades.
      *  6. updates the Essay Answers and submission tables in the database with the student marks.
      * @param submissionId the ID of the submission to be graded.
      */
@@ -304,7 +305,7 @@ public class HelperFunctions {
     }
 
     /**
-     * Reads the LLM's Grading reply and Extracts the grades and grade justifications for each essay question.
+     * Reads the LLMs Grading reply and Extracts the grades and grade justifications for each essay question.
      * NOTE: this function returns by reference: the values will be stored in the 'grade' and 'gradeJustification'
      * attributes of the EssayQuestion objects of the 'questions' vector.
      * @param gradeReply the LLM Reply containing the grades.
@@ -323,5 +324,67 @@ public class HelperFunctions {
             else if (elements[0].matches("<no credit>")) questions.get(i).grade = "<no credit>";
             questions.get(i).gradeJustification = elements[1];
         }
+    }
+
+    /**
+     * Awards points to students for logging in and updates the last login attribute in the database
+     * points scheme:
+     *      if the student's last login was today, no points are awarded
+     *      if their last login was yesterday, 20 points for logging in 2 days in a row.
+     *      otherwise, 10 points.
+     * @param studentId the ID of the student in question.
+     * @param lastLogin a date object containing the time of the student's last login.
+     */
+    public static void StudentLoginRewards(int studentId, Date lastLogin) {
+        Calendar lastLoginTime = new Calendar.Builder().setCalendarType("gregorian").setInstant(lastLogin).build();
+        // 3 objects:
+        // one day ahead of the last login of the student. represents the end of the day that contains the last login.
+        Calendar oneDayAhead = new Calendar.Builder().setDate(lastLoginTime.get(Calendar.YEAR),
+                lastLoginTime.get(Calendar.MONTH),
+                lastLoginTime.get(Calendar.DAY_OF_MONTH) + 1).build();
+
+        // two days ahead of the student's last login. represents the end of the day after the day of the last login
+        Calendar twoDaysAhead = new Calendar.Builder().setDate(lastLoginTime.get(Calendar.YEAR),
+                lastLoginTime.get(Calendar.MONTH),
+                lastLoginTime.get(Calendar.DAY_OF_MONTH) + 2).build();
+
+        // the current time
+        Calendar currentTime = new Calendar.Builder().setInstant(new Date()).build();
+
+        int points = 0;
+
+        // if the current time was more than 2 days after the last login,
+        if (twoDaysAhead.before(currentTime)) points = 10;       // student gets 10 points
+            // if the last login was between one day and 2 days after the last login,
+        else if (oneDayAhead.before(currentTime)) points = 20;   // 20 point reward for logging in 2 days in a row.
+
+        Database.addPointsToStudent(studentId, points);
+        Database.updateLastLogin(studentId, lastLogin);
+    }
+
+    /**
+     * Calculates points based on a student's performance in a quiz, and update the database with the new points.
+     * Points Scheme:
+     *      if the student got less than half the marks for a quiz, he doesn't get any points.
+     *      for every mark the student get over half the grade ( i.e. studentMark - fullMark/2 ), get gets 10 points
+     *      if the student got the full grade, he gets a 50 points bonus.
+     *      if the student got an almost perfect grade (i.e. fullMarks - 1), he gets 20 points bonus.
+     * @param studentId The ID of the student in question.
+     * @param fullMark The full mark in the quiz in question.
+     * @param studentMark The student's mark in that quiz.
+     */
+    public static void awardPointsForQuiz(int studentId, int fullMark, int studentMark){
+        assert studentMark <= fullMark;
+        int points = 0;
+        if(studentMark == fullMark)
+            points += 50;           // bonus for getting a full mark
+        else if(studentMark == (fullMark - 1))
+            points += 20;           // bonus for almost getting a full mark
+
+        studentMark -= fullMark/2; // calculate the amount of marks above half marks
+        if(studentMark > 0)
+            points += 10 * studentMark; // 10 points for every student mark more than half the full mark.
+        Database.addPointsToStudent(studentId, points);
+
     }
 }

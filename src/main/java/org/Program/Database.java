@@ -775,4 +775,38 @@ public class Database {
             System.out.println("Operation failed: " + e.getMessage());
         }
     }
+
+    public static void addPointsToStudent(int studentId, int amount){
+        try {
+            PreparedStatement ps = connection.prepareStatement("""
+                    update Students
+                    set points = points + "?
+                    where studentId = ?;
+                    """);
+
+            ps.setInt(1, amount);
+            ps.setInt(2, studentId);
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            System.out.println("Operation failed: " + e.getMessage());
+        }
+    }
+
+    public static void updateLastLogin(int studentId, java.util.Date newLastLogin){
+        try {
+            PreparedStatement ps = connection.prepareStatement("""
+                    update Students
+                    set lastLogin = ?
+                    where studentId = ?
+                    """);
+
+            ps.setTimestamp(1, new Timestamp(newLastLogin.getTime()));
+            ps.setInt(2, studentId);
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            System.out.println("Operation failed: " + e.getMessage());
+        }
+    }
 }

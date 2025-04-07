@@ -5,7 +5,10 @@ import org.Program.Entities.Question;
 import org.Program.Entities.Quiz;
 import org.Program.Entities.Student;
 
+import com.github.jaiimageio.impl.plugins.gif.GIFImageMetadata;
+
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -26,9 +29,15 @@ import static java.awt.GridBagConstraints.LINE_START;
  *  change the factory function that produces the buttons.
 * */
 public class GUI_Elements {
-    public final static Color buttonColor1 = new Color(44, 44, 44);
-    public final static Dimension buttonSize1 = new Dimension(160, 50);
-    public final static EmptyBorder buttonMargin1 = new EmptyBorder(20, 20, 20, 20);
+    public final static String TEXT_FONT = "Montserrat";
+    public final static Color BUTTON_COLOR = new Color(44, 44, 44);
+    public final static Dimension BUTTON_SIZE = new Dimension(160, 50);
+    public final static EmptyBorder BUTTON_MARGIN = new EmptyBorder(20, 20, 20, 20);
+    public final static Color APP_BACKGROUND = new Color(118, 39, 255);
+    public final static Color TEXT_FOREGROUND = new Color(255, 255, 255);
+    public final static Color SECONDARY_BACKGROUND = new Color(255, 247, 209);
+    public final static Color WARNING_BACKGROUND = new Color(223, 0, 0);
+    public final static Border BLACK_BORDER = BorderFactory.createLineBorder(new Color(223, 0, 0));
 
 
     public final static Dimension textFieldSize1 = new Dimension(300, 30);
@@ -36,8 +45,8 @@ public class GUI_Elements {
     public static JPanel panel() {
 
         JPanel panel = new JPanel();
-        panel.setBackground(Page.APP_BACKGROUND);
-        panel.setForeground(Page.TEXT_FOREGROUND);
+        panel.setBackground(APP_BACKGROUND);
+        panel.setForeground(TEXT_FOREGROUND);
         
         return panel;
     }
@@ -45,8 +54,8 @@ public class GUI_Elements {
     public static JPanel panel(LayoutManager layout) {
 
         JPanel panel = new JPanel(layout);
-        panel.setBackground(Page.APP_BACKGROUND);
-        panel.setForeground(Page.TEXT_FOREGROUND);
+        panel.setBackground(APP_BACKGROUND);
+        panel.setForeground(TEXT_FOREGROUND);
         
         return panel;
     }
@@ -54,15 +63,15 @@ public class GUI_Elements {
     public static JRadioButton radioButton(String text) {
 
         JRadioButton button = new JRadioButton(text);
-        button.setBackground(Page.APP_BACKGROUND);
-        button.setForeground(Page.TEXT_FOREGROUND);
+        button.setBackground(APP_BACKGROUND);
+        button.setForeground(TEXT_FOREGROUND);
 
         return button;
     }
 
     public static JLabel label(String text) {
         JLabel label = new JLabel(text);
-        label.setFont(new Font(Page.TEXT_FONT, Font.BOLD, 14));
+        label.setFont(new Font(TEXT_FONT, Font.BOLD, 14));
         label.setForeground(new Color(255, 255, 255));
         return label;
     }
@@ -78,9 +87,9 @@ public class GUI_Elements {
 
         // aesthetics
         button.setForeground(new Color(255,255,255));
-        button.setBackground(buttonColor1);
-        button.setPreferredSize(buttonSize1);
-        button.setBorder(buttonMargin1);
+        button.setBackground(BUTTON_COLOR);
+        button.setPreferredSize(BUTTON_SIZE);
+        button.setBorder(BUTTON_MARGIN);
         button.setFocusable(false);
 
         return button;
@@ -442,8 +451,8 @@ class ClassPanel extends JPanel{
         JLabel className = new JLabel(class_.name);
         JLabel classIcon = new JLabel(class_.classIcon);
         JLabel classId = new JLabel(String.format("Class ID: %d", class_.id));
-        this.add(className, c); c.gridy++;
         this.add(classIcon, c); c.gridy++;
+        this.add(className, c); c.gridy++;
         this.add(classId, c);
     }
 }
@@ -489,52 +498,87 @@ class ClassesPane extends JPanel implements MouseListener {
 //
 class ManageStudentsListPanel extends JPanel implements ActionListener, ListSelectionListener {
     Window window;
-    JButton backButton =  GUI_Elements.button("Back");
     Class class_;
     JList<String> studentList;
     Vector<Student> students;
-    ManageStudentsListPanel(Window window){ // todo: make this take class as an argument
-        super(new BorderLayout());
+    private final JButton goBackButton = GUI_Elements.button("Go back");
+
+    ManageStudentsListPanel(Window window) {
+
+        super(new GridBagLayout());
 
         class_ = window.getCurrentClass();
         this.students = Database.getStudentsInClass(class_.id);
         this.window = window;
+        this.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
 
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(10, 10, 10, 10);
-        c.gridy = c.gridx = 0;
+        JLabel manageStudentsLabel = GUI_Elements.label("Manage Students");
+        manageStudentsLabel.setForeground(Color.BLACK);
+        manageStudentsLabel.setFont(new Font(GUI_Elements.TEXT_FONT, Font.BOLD, 20));
+        JLabel descriptionLabel = GUI_Elements.label("Select one or more students to manaage:");
+        descriptionLabel.setForeground(Color.BLACK);
 
-        // label panel
-        JPanel labelPanel = new JPanel(new GridBagLayout());
-        labelPanel.add(GUI_Elements.label("Manage Students"), c); c.gridy++;
-        JLabel descriptionLabel = new JLabel("Select one student to manage");
-        labelPanel.add(descriptionLabel, c);
+        JPanel studentsListPanel = GUI_Elements.panel(new GridBagLayout());
+        studentsListPanel.setBackground(Color.WHITE);
 
-        // list
+        goBackButton.setBackground(GUI_Elements.WARNING_BACKGROUND);
+        goBackButton.addActionListener(this);
+
+
         studentList = new JList<>(HelperFunctions.studentsToStringVector(students));
         studentList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        studentList.setVisibleRowCount(12);
+        studentList.setVisibleRowCount(15);
         studentList.addListSelectionListener(this);
 
-        // button panel
-        c.gridx = 0; c.gridy = 1;
-        JPanel buttonPanel = new JPanel(new GridBagLayout());
+        JScrollPane scrollPane = new JScrollPane(studentList);
 
-        backButton.addActionListener(this);
-        backButton.setBackground(new Color(192, 64, 64));
+        
+        
+        
+        // Grid Management --------------------------------------------------------------------------
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = c.gridx = 0;
+        c.weightx = 1.0;
+        c.weighty = 1.0;
+        c.insets = new Insets(0, 10, 0, 10);
+        
+        // ---------------
+        GridBagConstraints innerC = new GridBagConstraints();
+        innerC.gridx = 0;
+        innerC.gridy = 0;
+        innerC.weightx = 1.0;
+        innerC.weighty = 1.0;
+        innerC.fill = GridBagConstraints.BOTH;
 
-        buttonPanel.add(backButton, c);
+        studentsListPanel.add(scrollPane, innerC);
+        // ---------------
 
+        c.insets = new Insets(20, 10, 0, 10);
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.CENTER;
+        this.add(manageStudentsLabel, c);
+        
+        c.insets = new Insets(0, 10, 0, 10);
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.WEST;
+        c.gridy++;
+        this.add(descriptionLabel, c);
+        
+        c.anchor = GridBagConstraints.CENTER;
+        c.fill = GridBagConstraints.BOTH;
+        c.gridy++;
+        this.add(studentsListPanel, c);
+        
+        c.insets = new Insets(0, 10, 10, 10);
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridy++;
+        this.add(goBackButton, c);
 
-        // add panels
-        this.add(labelPanel, BorderLayout.NORTH);
-        this.add(new JScrollPane(studentList), BorderLayout.CENTER);
-        this.add(buttonPanel, BorderLayout.SOUTH);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if(e.getSource() == backButton)
+        if(e.getSource() == goBackButton)
             window.switchPage(new InstructorHomePage(window));
     }
 
@@ -561,45 +605,78 @@ class AddStudentListPanel extends JPanel implements ActionListener, ListSelectio
     JList<String> studentList;
     Vector<Student> students;
     AddStudentListPanel(Window window){
-        super(new BorderLayout());
+        super(new GridBagLayout());
         this.students = Database.getStudentsNotInClass(window.getCurrentClass().id);
         this.window = window;
+        this.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
 
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(10, 10, 10, 10);
-        c.gridy = c.gridx = 0;
 
-        // label panel
-        JPanel labelPanel = new JPanel(new GridBagLayout());
-        labelPanel.add(GUI_Elements.label("Add Students"), c); c.gridy++;
-        JLabel descriptionLabel = new JLabel("Select one or more students to add to your class");
-        labelPanel.add(descriptionLabel, c);
+        JLabel manageStudentsLabel = GUI_Elements.label("Add Students");
+        manageStudentsLabel.setForeground(Color.BLACK);
+        manageStudentsLabel.setFont(new Font(GUI_Elements.TEXT_FONT, Font.BOLD, 20));
+        JLabel descriptionLabel = GUI_Elements.label("Select one or more students to add to your class:");
+        descriptionLabel.setForeground(Color.BLACK);
 
-        // list
+        JPanel studentsListPanel = GUI_Elements.panel(new GridBagLayout());
+        studentsListPanel.setBackground(Color.WHITE);
+
+        cancelButton.setBackground(GUI_Elements.WARNING_BACKGROUND);
+        cancelButton.addActionListener(this);
+        addStudentsButton.addActionListener(this);
+
         studentList = new JList<>(HelperFunctions.studentsToStringVector(students));
         studentList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        studentList.setVisibleRowCount(12);
+        studentList.setVisibleRowCount(15);
         studentList.addListSelectionListener(this);
 
-        // button panel
-        c.gridx = 0; c.gridy = 1;
-        JPanel buttonPanel = new JPanel(new GridBagLayout());
+        JScrollPane scrollPane = new JScrollPane(studentList);
 
-        addStudentsButton.addActionListener(this);
-        cancelButton.addActionListener(this);
-        cancelButton.setBackground(new Color(192, 64, 64));
-
-        buttonPanel.add(addStudentsButton, c); c.gridx++;
-        buttonPanel.add(cancelButton, c);
-
+        
+        
+        
+        // Grid Management --------------------------------------------------------------------------
+        GridBagConstraints c = new GridBagConstraints();
         c.gridy = c.gridx = 0;
+        c.weightx = 1.0;
+        c.weighty = 1.0;
+        c.insets = new Insets(0, 10, 0, 10);
+        
+        // ---------------
+        GridBagConstraints innerC = new GridBagConstraints();
+        innerC.gridx = 0;
+        innerC.gridy = 0;
+        innerC.weightx = 1.0;
+        innerC.weighty = 1.0;
+        innerC.fill = GridBagConstraints.BOTH;
+        
+        studentsListPanel.add(scrollPane, innerC);
+        // ---------------
+        
         c.gridwidth = 2;
-        buttonPanel.add(selectionCountLabel, c);
+        c.insets = new Insets(20, 10, 0, 10);
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.CENTER;
+        this.add(manageStudentsLabel, c);
+        
+        c.insets = new Insets(0, 10, 0, 10);
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.WEST;
+        c.gridy++;
+        this.add(descriptionLabel, c);
+        
+        c.anchor = GridBagConstraints.CENTER;
+        c.fill = GridBagConstraints.BOTH;
+        c.gridy++;
+        this.add(studentsListPanel, c);
+        
+        c.gridwidth = 1;
+        c.insets = new Insets(0, 10, 10, 10);
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridy++;
+        this.add(addStudentsButton, c);
+        c.gridx++;
+        this.add(cancelButton, c);
 
-        // add panels
-        this.add(labelPanel, BorderLayout.NORTH);
-        this.add(new JScrollPane(studentList), BorderLayout.CENTER);
-        this.add(buttonPanel, BorderLayout.SOUTH);
     }
 
     @Override
@@ -654,46 +731,82 @@ class RemoveStudentListPanel extends JPanel implements ActionListener, ListSelec
     JLabel selectionCountLabel = new JLabel("You have not selected any students");
     JList<String> studentList;
     Vector<Student> students;
-    RemoveStudentListPanel(Window window){
-        super(new BorderLayout());
+    RemoveStudentListPanel(Window window) {
+        
+        super(new GridBagLayout());
         this.students = Database.getStudentsInClass(window.getCurrentClass().id);
         this.window = window;
+        this.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
 
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(10, 10, 10, 10);
-        c.gridy = c.gridx = 0;
+        JLabel manageStudentsLabel = GUI_Elements.label("Add Students");
+        manageStudentsLabel.setForeground(Color.BLACK);
+        manageStudentsLabel.setFont(new Font(GUI_Elements.TEXT_FONT, Font.BOLD, 20));
+        JLabel descriptionLabel = GUI_Elements.label("Select one or more students to add to your class:");
+        descriptionLabel.setForeground(Color.BLACK);
 
-        // label panel
-        JPanel labelPanel = new JPanel(new GridBagLayout());
-        labelPanel.add(GUI_Elements.label("Remove Students"), c); c.gridy++;
-        JLabel descriptionLabel = new JLabel("Select one or more students to remove from your class");
-        labelPanel.add(descriptionLabel, c);
+        JPanel studentsListPanel = GUI_Elements.panel(new GridBagLayout());
+        studentsListPanel.setBackground(Color.WHITE);
 
-        // list
+        cancelButton.setBackground(GUI_Elements.WARNING_BACKGROUND);
+        cancelButton.addActionListener(this);
+        removeStudentsButton.addActionListener(this);
+
         studentList = new JList<>(HelperFunctions.studentsToStringVector(students));
         studentList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        studentList.setVisibleRowCount(12);
+        studentList.setVisibleRowCount(15);
         studentList.addListSelectionListener(this);
 
-        // button panel
-        c.gridx = 0; c.gridy = 1;
-        JPanel buttonPanel = new JPanel(new GridBagLayout());
+        JScrollPane scrollPane = new JScrollPane(studentList);
 
-        removeStudentsButton.addActionListener(this);
-        cancelButton.addActionListener(this);
-        cancelButton.setBackground(new Color(192, 64, 64));
-
-        buttonPanel.add(removeStudentsButton, c); c.gridx++;
-        buttonPanel.add(cancelButton, c);
-
+        
+        
+        
+        // Grid Management --------------------------------------------------------------------------
+        GridBagConstraints c = new GridBagConstraints();
         c.gridy = c.gridx = 0;
+        c.weightx = 1.0;
+        c.weighty = 1.0;
+        c.insets = new Insets(0, 10, 0, 10);
+        
+        // ---------------
+        GridBagConstraints innerC = new GridBagConstraints();
+        innerC.gridx = 0;
+        innerC.gridy = 0;
+        innerC.weightx = 1.0;
+        innerC.weighty = 1.0;
+        innerC.fill = GridBagConstraints.BOTH;
+        
+        studentsListPanel.add(scrollPane, innerC);
+        // ---------------
+        
         c.gridwidth = 2;
-        buttonPanel.add(selectionCountLabel, c);
+        c.insets = new Insets(20, 10, 0, 10);
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.CENTER;
+        this.add(manageStudentsLabel, c);
+        
+        c.insets = new Insets(0, 10, 0, 10);
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.WEST;
+        c.gridy++;
+        this.add(descriptionLabel, c);
+        
+        c.anchor = GridBagConstraints.CENTER;
+        c.fill = GridBagConstraints.BOTH;
+        c.gridy++;
+        this.add(studentsListPanel, c);
 
-        // add panels
-        this.add(labelPanel, BorderLayout.NORTH);
-        this.add(new JScrollPane(studentList), BorderLayout.CENTER);
-        this.add(buttonPanel, BorderLayout.SOUTH);
+        c.fill = GridBagConstraints.CENTER;
+        c.gridy++;
+        this.add(selectionCountLabel, c);
+        
+        c.gridwidth = 1;
+        c.insets = new Insets(0, 10, 10, 10);
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridy++;
+        this.add(removeStudentsButton, c);
+        c.gridx++;
+        this.add(cancelButton, c);
     }
 
     @Override
@@ -959,7 +1072,7 @@ class Table extends JPanel{
     public void insert(Component component, int row, int col){
         JPanel containerPanel = new JPanel(new BorderLayout());
         containerPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(1, 1, 1, 1, GUI_Elements.buttonColor1),
+                BorderFactory.createMatteBorder(1, 1, 1, 1, GUI_Elements.BUTTON_COLOR),
                 new EmptyBorder(5, 5, 5, 5)
         ));
         containerPanel.setOpaque(false);
@@ -979,7 +1092,7 @@ class Table extends JPanel{
 
             JPanel containerPanel = new JPanel(new BorderLayout());
             containerPanel.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createMatteBorder(1, 1, 1, 1, GUI_Elements.buttonColor1),
+                    BorderFactory.createMatteBorder(1, 1, 1, 1, GUI_Elements.BUTTON_COLOR),
                     new EmptyBorder(5, 5, 5, 5)));
 
             containerPanel.setOpaque(true);

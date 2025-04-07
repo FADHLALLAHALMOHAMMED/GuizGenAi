@@ -2,20 +2,17 @@ package org.Program;
 
 import org.Program.Entities.*;
 import org.Program.Entities.Class;
-import org.bouncycastle.asn1.dvcs.Data;
+import org.apache.poi.hssf.record.aggregates.PageSettingsBlock;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.image.DataBuffer;
-import java.util.ArrayList;
+
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Vector;
 
 /**
@@ -30,28 +27,26 @@ public abstract class Page extends JPanel implements ActionListener {
 
 
     Window window;
-    public static Color APP_BACKGROUND = new Color(118, 39, 255);
-    public static Color TEXT_FOREGROUND = new Color(255, 255, 255);
-    public static Color SECONDARY_BACKGROUND = new Color(255, 247, 209);
-    public final static String TEXT_FONT = "Montserrat";
+
     // private ArrayList<JPanel> panelsList = new ArrayList<>();
     private final Icon appImage = new ImageIcon(getClass().getResource("images/app_name.png"));
     private final JLabel appImageLabel;
     private final JButton logoutButton;
+    public final JLabel pageTitle;
     protected final JPanel headerPanel; // for headers (applied in all pages)
     protected final JPanel contentPanel; // for contents in all pages
 
     Page(Window window) {
 
         this.window = window;
-        this.setBackground(APP_BACKGROUND);
+        this.setBackground(GUI_Elements.APP_BACKGROUND);
         this.setLayout(new BorderLayout());
 
 
         // Header panel ------------------------------------------------------------------------------
         headerPanel = GUI_Elements.panel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        headerPanel.setBackground(APP_BACKGROUND);
+        headerPanel.setBackground(GUI_Elements.APP_BACKGROUND);
 
         // managing app_name image
         Image img = ((ImageIcon) appImage).getImage();
@@ -60,6 +55,9 @@ public abstract class Page extends JPanel implements ActionListener {
         Icon scaledAppImg = new ImageIcon(img);
         appImageLabel = new JLabel(scaledAppImg);
 
+        pageTitle = GUI_Elements.label("");
+        pageTitle.setFont(new Font(GUI_Elements.TEXT_FONT, Font.BOLD, 28));
+
         // managing the 'logout' label
         if (this instanceof StartPage || this instanceof RegisterPage || this instanceof LoginPage) {
             logoutButton = null;
@@ -67,8 +65,8 @@ public abstract class Page extends JPanel implements ActionListener {
         else {
 
             logoutButton = GUI_Elements.button("Logout");
-            logoutButton.setFont(new Font(Page.TEXT_FONT, Font.BOLD, 20));
-            logoutButton.setBackground(APP_BACKGROUND);
+            logoutButton.setFont(new Font(GUI_Elements.TEXT_FONT, Font.BOLD, 20));
+            logoutButton.setBackground(GUI_Elements.APP_BACKGROUND);
             logoutButton.setForeground(Color.RED);
 
             logoutButton.setFocusPainted(false);
@@ -93,7 +91,7 @@ public abstract class Page extends JPanel implements ActionListener {
         // Content panel ----------------------------------------------------------------------------
         
         contentPanel = GUI_Elements.panel(new GridBagLayout());
-        contentPanel.setBackground(APP_BACKGROUND);
+        contentPanel.setBackground(GUI_Elements.APP_BACKGROUND);
         
         // Grid manager -----------------------------------------------------------------------------
         gbc.fill = GridBagConstraints.NONE;
@@ -106,8 +104,13 @@ public abstract class Page extends JPanel implements ActionListener {
         gbc.insets = new Insets(23, 23, 23, 23);
         headerPanel.add(appImageLabel, gbc);
         gbc.gridx++;
-        gbc.anchor = GridBagConstraints.EAST;
+
+
+        gbc.anchor = GridBagConstraints.CENTER;
+        headerPanel.add(pageTitle, gbc);
         
+        gbc.gridx++;
+        gbc.anchor = GridBagConstraints.EAST;
         if (! (this instanceof StartPage || this instanceof RegisterPage || this instanceof LoginPage)) {
             headerPanel.add(logoutButton, gbc);
         }
@@ -133,7 +136,7 @@ class StartPage extends Page{
         contentPanel.setLayout(new GridBagLayout());
 
         JLabel titleLabel = GUI_Elements.label("Welcome to QuizGenAi");
-        titleLabel.setFont(new Font(Page.TEXT_FONT, Font.BOLD, 40));
+        titleLabel.setFont(new Font(GUI_Elements.TEXT_FONT, Font.BOLD, 40));
         loginButton = GUI_Elements.button("Login");
         registerButton = GUI_Elements.button("Register");
 
@@ -147,11 +150,11 @@ class StartPage extends Page{
         
         gbc.insets = new Insets(5, 10, 5, 10);
         gbc.gridy++;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         contentPanel.add(loginButton, gbc);
 
         gbc.gridy++;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         contentPanel.add(registerButton, gbc);
 
         contentPanel.setVisible(true);
@@ -230,7 +233,7 @@ class RegisterPage extends Page{
         GridBagConstraints registerConstraints = new GridBagConstraints();
         registerConstraints.gridx = 0; registerConstraints.gridy = 0;
         registerConstraints.weightx = 1.0; registerConstraints.weighty = 0;
-        registerConstraints.fill = registerConstraints.HORIZONTAL;
+        registerConstraints.fill = GridBagConstraints.HORIZONTAL;
         registerConstraints.insets = new Insets(5, 80, 5, 5);
         
         
@@ -343,7 +346,7 @@ class LoginPage extends Page{
         
         // Login Panel -------------------------------------------------------------------
         JPanel loginPanel = GUI_Elements.panel(new GridBagLayout());
-        loginPanel.setBackground(APP_BACKGROUND);
+        loginPanel.setBackground(GUI_Elements.APP_BACKGROUND);
 
         JLabel emailLabel = GUI_Elements.label("Email");
         JLabel passwordLabel = GUI_Elements.label("Password");
@@ -360,7 +363,7 @@ class LoginPage extends Page{
         GridBagConstraints loginConstraints = new GridBagConstraints();
         loginConstraints.gridx = 0; loginConstraints.gridy = 0;
         loginConstraints.weightx = 1.0; loginConstraints.weighty = 0;
-        loginConstraints.fill = loginConstraints.HORIZONTAL;
+        loginConstraints.fill = GridBagConstraints.HORIZONTAL;
         loginConstraints.insets = new Insets(5, 80, 5, 5);
         
         
@@ -423,9 +426,8 @@ class LoginPage extends Page{
     }
 }
 
-class InstructorHomePage extends Page {
+class InstructorHomePage extends Page  {
 
-    private final JLabel homePageLabel;
     private final JLabel descriptionLabel;
     private final JPanel cardsPanel;
     private final JScrollPane cardsScrollPane;
@@ -433,16 +435,15 @@ class InstructorHomePage extends Page {
     private final JPanel buttonsPanel;
     private final JButton newClassButton;
     private final JButton generateQuizButton;
-    private final JButton logoutButton = null;
 
     InstructorHomePage(Window window) {
 
         super(window);
         contentPanel.setLayout(new GridBagLayout());
         
-        homePageLabel = GUI_Elements.label("Instructor Home Page");
+        pageTitle.setText("Instructor Home Page");
         
-        descriptionLabel = new JLabel(String.format(
+        descriptionLabel = GUI_Elements.label(String.format(
             "Welcome, %s %s, to QuizGenAI",
             window.getUser().firstName, window.getUser().lastName
             )
@@ -468,12 +469,35 @@ class InstructorHomePage extends Page {
             
             ClassPanel classPanel = new ClassPanel(classes.get(i));
             classPanel.setPreferredSize(cardSize);
-            classPanel.setBackground(Page.SECONDARY_BACKGROUND);
+            classPanel.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
             classPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
             
             cardsConstraints.gridx = i % columns;
             cardsConstraints.gridy = i / columns;
 
+            classPanel.addMouseListener(
+                new MouseListener() {
+                    
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+
+                        window.setCurrentClass(classPanel.class_);
+                        window.switchPage(new ManageClassPage(window));
+                        return;  
+                    }
+
+                    @Override
+                    public void mouseEntered(MouseEvent e) {}
+                    @Override
+                    public void mouseExited(MouseEvent e) {}
+                    @Override
+                    public void mousePressed(MouseEvent e) {}
+                    @Override
+                    public void mouseReleased(MouseEvent e) {}
+                    
+
+                }
+            );
             cardsPanel.add(classPanel, cardsConstraints);
         }
 
@@ -493,7 +517,7 @@ class InstructorHomePage extends Page {
         generateQuizButton.addActionListener(this);
         
 
-        // Grid manager
+        // Grid manager ------------------------------------------------------------------------------------------
         GridBagConstraints homeConstraints = new GridBagConstraints();
         GridBagConstraints buttonsConstraints = new GridBagConstraints();
         homeConstraints.gridx = 0;
@@ -502,9 +526,7 @@ class InstructorHomePage extends Page {
         buttonsConstraints.gridx = 0;
         buttonsConstraints.gridy = 0;
         buttonsConstraints.fill = GridBagConstraints.HORIZONTAL;
-    
-        
-        
+
         buttonsConstraints.weightx = 1.0;
         buttonsConstraints.weighty = 1.0;
         buttonsConstraints.insets = new Insets(10, 23, 23, 10);
@@ -516,6 +538,13 @@ class InstructorHomePage extends Page {
         
         homeConstraints.insets = new Insets(23, 23, 23, 23);
 
+        homeConstraints.fill = GridBagConstraints.NONE;
+        homeConstraints.anchor = GridBagConstraints.CENTER;
+        contentPanel.add(descriptionLabel, homeConstraints);
+        
+        homeConstraints.fill = GridBagConstraints.BOTH;
+        homeConstraints.anchor = GridBagConstraints.WEST;
+        homeConstraints.gridy++;
         homeConstraints.weighty = 2.0;
         homeConstraints.weightx = 1.0;
         contentPanel.add(cardsScrollPane, homeConstraints);
@@ -523,60 +552,14 @@ class InstructorHomePage extends Page {
         homeConstraints.weightx = 1.0;
         homeConstraints.weighty = 1.0;
         contentPanel.add(buttonsPanel, homeConstraints);
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        // GridBagConstraints c = new GridBagConstraints();
-        // c.insets = new Insets(10, 10, 10, 10);
-
-        // // labels
-        // JPanel labelPanel = GUI_Elements.panel(new GridBagLayout());
-        // c.gridx = 0; c.gridy = 0;
-        // JLabel titleLabel = GUI_Elements.label("Instructor Home Page");
-        // JLabel descriptionLabel = new JLabel(String.format("Welcome, %s %s, to the QuizGenAI Program!",
-        //         window.getUser().firstName, window.getUser().lastName));
-
-        // labelPanel.add(titleLabel, c); c.gridy++;
-        // labelPanel.add(descriptionLabel, c);
-        // this.add(BorderLayout.NORTH, labelPanel);
-
-        // //Buttons
-        // c.gridx = 0; c.gridy = 0;
-        // JPanel buttonPanel = GUI_Elements.panel(new GridBagLayout());
-        // buttonPanel.setPreferredSize(new Dimension(400, 300));
-        // newClassButton.addActionListener(this);
-        // generateQuizButton.addActionListener(this);
-        // logoutButton.addActionListener(this);
-
-        // buttonPanel.add(newClassButton, c); c.gridy++;
-        // buttonPanel.add(generateQuizButton, c); c.gridy++;
-        // buttonPanel.add(logoutButton, c);
-        // this.add(BorderLayout.CENTER, buttonPanel);
-
-        // // classes scroll panel
-        // this.add(BorderLayout.EAST, new ClassesPane(window));
+    
     }
+
 
     @Override
     public void actionPerformed(ActionEvent e) {
 
-        if(e.getSource() == logoutButton){
-            window.setUser(null);
-            window.switchPage(new StartPage(window));
-
-        } else if(e.getSource() == generateQuizButton){
+        if(e.getSource() == generateQuizButton){
             JFileChooser fileChooser = new JFileChooser();
             int returnVal = fileChooser.showOpenDialog(this);
 
@@ -588,6 +571,15 @@ class InstructorHomePage extends Page {
         } else if(e.getSource() == newClassButton){
             window.switchPage(new CreateNewClassPage(window));
         }
+
+
+        // // ---- to stop at WaitingPage for developing ----
+        // if (e.getSource() == generateQuizButton) {
+        //     // Switch to WaitingPage instead of generating the quiz immediately
+        //     window.switchPage(new WaitingPage(window));
+        // } else if (e.getSource() == newClassButton) {
+        //     window.switchPage(new CreateNewClassPage(window));
+        // }
     }
 }
 
@@ -600,18 +592,19 @@ class StudentHomePage extends Page{
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = c.gridy = 0;
         c.insets = new Insets(10, 10, 10, 10);
+        
 
-        this.add(GUI_Elements.label("Student Home Page")); c.gridy++;
+        contentPanel.add(GUI_Elements.label("Student Home Page")); c.gridy++;
 
         JLabel descriptionLabel = new JLabel(String.format("Welcome, %s %s, to the QuizGenAI Program!",
                 window.getUser().firstName, window.getUser().lastName));
-        this.add(descriptionLabel, c); c.gridy++;
+        contentPanel.add(descriptionLabel, c); c.gridy++;
 
         viewQuizzesButton.addActionListener(this);
         logoutButton.addActionListener(this);
 
-        this.add(viewQuizzesButton, c); c.gridy++;
-        this.add(logoutButton, c);
+        contentPanel.add(viewQuizzesButton, c); c.gridy++;
+        contentPanel.add(logoutButton, c);
     }
 
     @Override
@@ -626,26 +619,42 @@ class StudentHomePage extends Page{
 }
 
 class WaitingPage extends Page{
+    
+    
     JProgressBar progressBar = new JProgressBar();
     JButton cancelButton = GUI_Elements.button("Cancel Quiz Generation");
+    JLabel loadingLabel = GUI_Elements.label("Loading...");
+
+
     WaitingPage(Window window){
         super(window);
-        this.setLayout(new GridBagLayout());
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(10, 10, 10, 10);
-        c.gridy = 0; c.gridx = 0;
+        contentPanel.setLayout(new GridBagLayout());
 
-        // labels
-        JLabel titleLabel = GUI_Elements.label("Instructor Home Page");
-        this.add(titleLabel, c); c.gridy++;
-
-        // progress bar
-        this.add(progressBar, c); c.gridy++;
-
-        // button
-        this.add(cancelButton, c);
+        pageTitle.setText("Processing...");
+        
         cancelButton.addActionListener(this);
-//        printButton.addActionListener(e -> System.out.println(MCQGen.Questions.size()));
+
+
+        // Grid Management -----------------------------------------------------------------------
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = 0; c.gridx = 0;
+        c.weightx = 1.0;
+        c.weighty = 0.0;
+        c.fill = GridBagConstraints.CENTER;
+        c.anchor = GridBagConstraints.CENTER;
+        c.insets = new Insets(10, 400, 10, 400);
+        
+        
+        contentPanel.add(loadingLabel, c);
+
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridy++;
+        contentPanel.add(progressBar, c);
+        
+        c.insets = new Insets(10, 400, 23, 400);
+        c.gridy++;
+        contentPanel.add(cancelButton, c);
+
     }
 
     @Override
@@ -669,7 +678,7 @@ class QuizPage extends Page{
         super(window);
         this.setLayout(new BorderLayout());
         quizScrollPane = new QuizScrollPane(window.quiz.questions);
-        this.add(quizScrollPane, BorderLayout.CENTER);
+        contentPanel.add(quizScrollPane, BorderLayout.CENTER);
 
         // buttons
         GridBagConstraints c = new GridBagConstraints();
@@ -683,7 +692,7 @@ class QuizPage extends Page{
         buttonPanel.add(backButton, c); c.gridx++;
         buttonPanel.add(submitButton, c);
 
-        this.add(buttonPanel, BorderLayout.SOUTH);
+        contentPanel.add(buttonPanel, BorderLayout.SOUTH);
     }
 
     @Override
@@ -707,7 +716,6 @@ class QuizPage extends Page{
         }
     }
 }
-
 
 class TestPage extends Page {
     JButton addQuestionButton = GUI_Elements.button("Add new Question");
@@ -737,124 +745,185 @@ class CreateNewClassPage extends Page{
 
 
     String iconFilePath = "DefaultImages\\DefaultClassIcon.png";
-    JLabel selectedIconLabel = new JLabel();
-    JTextField classnameTextField = GUI_Elements.textField();
+
+    JTextField classNameField = GUI_Elements.textField();
+    JLabel classNameLabel = GUI_Elements.label("Class Name");
     JButton createClassButton = GUI_Elements.button("Create Class");
-    JButton selectIconButton = GUI_Elements.button("Select Class Icon");
+    JButton selectIconButton = GUI_Elements.button("Select an Icon");
     JButton cancelButton = GUI_Elements.button("Cancel");
+
+    JPanel localPanel = GUI_Elements.panel(new GridBagLayout());
 
 
     CreateNewClassPage(Window window){
 
         super(window);
         contentPanel.setLayout(new GridBagLayout());
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0; c.gridy = 0; c.gridwidth= 2;
-        c.anchor = GridBagConstraints.LINE_START;
-        c.insets = new Insets(20, 10, 20, 10);
 
-        contentPanel.add(GUI_Elements.label("Create New Class"), c);
 
-        // class name Panel
-        JPanel classNamePanel = GUI_Elements.panel(new GridBagLayout());
+        pageTitle.setText("Create New Class");
 
-        JLabel classNameLabel = new JLabel("Class Name: ");
-        classNameLabel.setPreferredSize(new Dimension(100, 30));
+        cancelButton.setBackground(GUI_Elements.WARNING_BACKGROUND);
+        cancelButton.setBorder(GUI_Elements.BLACK_BORDER);
 
-        c.gridwidth= 1;
-        classNamePanel.add(classNameLabel, c); c.gridx++;
-        classNamePanel.add(classnameTextField, c);
-
-        c.gridx = 0; c.gridy = 1;  c.gridwidth= 2;
-        contentPanel.add(classNamePanel, c); c.gridy++;
-        contentPanel.add(selectIconButton, c); c.gridx++;
-        contentPanel.add(selectedIconLabel, c);
+        selectIconButton.setPreferredSize(new Dimension(150, GUI_Elements.textFieldSize1.height));
+        createClassButton.setPreferredSize(new Dimension((GUI_Elements.textFieldSize1.width + selectIconButton.getPreferredSize().width + 20), GUI_Elements.BUTTON_SIZE.height));
+        cancelButton.setPreferredSize(new Dimension((GUI_Elements.textFieldSize1.width + selectIconButton.getPreferredSize().width + 20), GUI_Elements.BUTTON_SIZE.height));
 
         selectIconButton.addActionListener(this);
-
-        // Button Panel
-        c.insets = new Insets(10, 10, 10, 10);
-        c.gridx = 0; c.gridy = 0; c.gridwidth= 1;
-
-        JPanel buttonPanel = GUI_Elements.panel(new GridBagLayout());
-        cancelButton.setBackground(new Color(192, 64, 64));
-
         createClassButton.addActionListener(this);
         cancelButton.addActionListener(this);
 
-        buttonPanel.add(createClassButton, c); c.gridx++;
-        buttonPanel.add(cancelButton, c);
 
-        c.gridwidth = 2; c.gridx = 0; c.gridy = 3;
-        contentPanel.add(buttonPanel, c);
-        contentPanel.setVisible(true);
+        // Grid Managemenet -----------------------------------------------------------------------------------------
+
+        GridBagConstraints contentPanelGBC = new GridBagConstraints();
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.gridx = 0; gbc.gridy = 0;
+
+        
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.anchor = GridBagConstraints.WEST;
+        localPanel.add(classNameLabel, gbc);
+        
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridy++;
+        localPanel.add(classNameField, gbc);
+        
+        gbc.gridx++;
+        localPanel.add(selectIconButton, gbc);
+        
+
+        gbc.insets = new Insets(20, 10, 10, 10);
+        gbc.gridx = 0; gbc.gridy++;
+        gbc.gridwidth = 2;
+        localPanel.add(createClassButton, gbc);
+        
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.gridy++;
+        localPanel.add(cancelButton, gbc);
+
+
+        contentPanelGBC.gridx = 0; contentPanelGBC.gridy = 0;
+        contentPanelGBC.fill = GridBagConstraints.BOTH;
+        contentPanelGBC.anchor = GridBagConstraints.CENTER;
+        contentPanel.add(localPanel, contentPanelGBC);
+
+
     }
+
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if(e.getSource() == selectIconButton) {
+
+        if (e.getSource() == selectIconButton) {
 
             JFileChooser fileChooser = new JFileChooser();
 
             int returnVal = fileChooser.showOpenDialog(this);
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 String filePath = fileChooser.getSelectedFile().getAbsolutePath();
-                if(HelperFunctions.isValidImage(filePath)){
+
+                if (HelperFunctions.isValidImage(filePath)) {
                     iconFilePath = filePath;
-                    selectedIconLabel.setText("Selected Image:" + filePath);
-                } else {
-                    JOptionPane.showMessageDialog(window,
-                            "The Icon file format must be: \".png\", \".gif\", or \".jpeg\".",
-                            "Invalid Image",
-                            JOptionPane.ERROR_MESSAGE);
+                }
+                else {
+
+                    JOptionPane.showMessageDialog(
+                        window,
+                        "The Icon file format must be: \".png\", \".gif\", or \".jpeg\".",
+                        "Invalid Image",
+                        JOptionPane.ERROR_MESSAGE
+                    );
                 }
             }
 
-        } else if(e.getSource() == cancelButton){
+        }
+        else if (e.getSource() == cancelButton) {
+
             window.switchPage(new InstructorHomePage(window));
-        } else if(e.getSource() == createClassButton){
-            String className = classnameTextField.getText();
+        }
+        else if (e.getSource() == createClassButton) {
+
+            String className = classNameField.getText();
             String operationResult = Database.newClass(className, iconFilePath, window);
 
-            if(operationResult == null){
-                JOptionPane.showMessageDialog(window,
-                        "Class Created Successfully.",
-                        "Successful Operation",
-                        JOptionPane.INFORMATION_MESSAGE);
+            if (operationResult == null) {
+
+                JOptionPane.showMessageDialog(
+                    window,
+                    "Class Created Successfully.",
+                    "Successful Operation",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+            
                 return;
             }
-            JOptionPane.showMessageDialog(window,
-                    operationResult,
-                    "Operation Failed",
-                    JOptionPane.ERROR_MESSAGE);
+
+            JOptionPane.showMessageDialog(
+                window,
+                operationResult,
+                "Operation Failed",
+                JOptionPane.ERROR_MESSAGE
+            );
+
         }
+
 
     }
 }
 
 class ManageClassPage extends Page{
+
+
     ManageStudentsListPanel manageStudentsList;
     AddStudentListPanel addStudentsList;
     RemoveStudentListPanel removeStudentsList;
-    ManageClassPage(Window window){
-        super(window);
-        this.setLayout(new GridBagLayout());
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0; c.gridy = 0;
-        c.insets = new Insets(20, 10, 20, 10);
 
+
+    ManageClassPage(Window window) {
+
+        super(window);
+        contentPanel.setLayout(new GridBagLayout());
+
+
+        // local panel --------------------------------------------------------------------------------
+        JPanel localPanel = GUI_Elements.panel(new GridBagLayout());
+        
         JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 
         manageStudentsList = new ManageStudentsListPanel(window);
         addStudentsList = new AddStudentListPanel(window);
         removeStudentsList = new RemoveStudentListPanel(window);
 
-        tabbedPane.addTab("Manage Class", manageStudentsList);
-        tabbedPane.addTab("Add Students to Class", addStudentsList);
-        tabbedPane.addTab("Remove Students from Class", removeStudentsList);
+        
 
-        this.add(tabbedPane, c);
+        tabbedPane.addTab("                              Manage Class                              ", manageStudentsList);
+        tabbedPane.addTab("      Add Students to Class      ", addStudentsList);
+        tabbedPane.addTab("     Remove Students from Class     ", removeStudentsList);
+
+        // Set tab background colors
+        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+            tabbedPane.setBackgroundAt(i, GUI_Elements.SECONDARY_BACKGROUND);
+        }
+
+        // Grid Management ---------------------------------------------------------------------------
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 0; c.gridy = 0;
+        c.weightx = 1.0;
+        c.weighty = 1.0;
+        c.fill = GridBagConstraints.BOTH;
+        c.anchor = GridBagConstraints.CENTER;
+        c.insets = new Insets(10, 123, 50, 123);
+
+        localPanel.add(tabbedPane, c);
+        contentPanel.add(localPanel, c);
     }
+
 
     @Override
     public void actionPerformed(ActionEvent e) {

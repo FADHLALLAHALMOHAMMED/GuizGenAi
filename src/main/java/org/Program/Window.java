@@ -1,13 +1,11 @@
 package org.Program;
 
 import org.Program.Entities.Class;
-import org.Program.Entities.Question;
 import org.Program.Entities.Quiz;
 import org.Program.Entities.User;
 
 import javax.swing.*;
-import java.util.Date;
-import java.util.Vector;
+
 // todo: look into implementing a "last page" attribute, so that users can go back without needing to reload the page.
 public class Window extends JFrame{
     private Page currentPage;

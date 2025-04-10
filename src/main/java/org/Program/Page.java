@@ -956,36 +956,84 @@ class ManageClassPage extends Page{
 
 class EditQuizPage extends Page{
     EditQuizScrollPane editQuizScrollPane = new EditQuizScrollPane(QuizGen.questions);
-    JButton backButton = GUI_Elements.button("Back");
+    JButton backButton = GUI_Elements.button("Go back");
     JButton saveButton = GUI_Elements.button("Save Changes");
     QuizSettingsPanel quizSettingsPanel = new QuizSettingsPanel(window);
-    EditQuizPage(Window window){
+
+    
+    EditQuizPage(Window window) {
+        
         super(window);
-        // side panel
-        JPanel sidePanel = new JPanel(new GridBagLayout());
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(5, 5, 10, 10);
-        c.gridx = 0; c.gridy = 0; c.gridwidth = 2;
+        
 
-        // title label
-        sidePanel.add(GUI_Elements.label("Edit Quiz"), c); c.gridy++;
 
-        // settings panel
-        sidePanel.add(quizSettingsPanel, c); c.gridy++;
 
-        // buttons
-        c.gridwidth = 1;
-        backButton.addActionListener(this);
+        JPanel localPanel = GUI_Elements.panel(new GridBagLayout());
+        JTabbedPane editQuizTabbedPane = new JTabbedPane(JTabbedPane.TOP);
+
+        editQuizTabbedPane.addTab("Quiz Questions", editQuizScrollPane);
+        editQuizTabbedPane.addTab("Schedule Time", quizSettingsPanel);
+
         saveButton.addActionListener(this);
-        sidePanel.add(backButton, c); c.gridx++;
-        sidePanel.add(saveButton, c); c.gridx++;
+        backButton.addActionListener(this);
 
-        c.weighty = 1.0;
-        c.fill = GridBagConstraints.BOTH;
-        sidePanel.add(Box.createVerticalGlue(), c);
 
-        this.add(sidePanel, BorderLayout.EAST);
-        this.add(editQuizScrollPane, BorderLayout.CENTER);
+
+        // Grid Management ----------------------------------------------------------------------
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0; gbc. gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridwidth = 1;
+        
+        localPanel.add(editQuizTabbedPane, gbc);
+        
+        gbc.gridwidth = 2;
+        gbc.insets = new Insets(10, 123, 10, 123);
+        contentPanel.add(localPanel, gbc);
+        
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = 1;
+        gbc.gridy++;
+        gbc.insets = new Insets(10, 123, 23, 5);
+        contentPanel.add(saveButton, gbc);
+        gbc.gridx++;
+        gbc.insets = new Insets(10, 5, 23, 123);
+        contentPanel.add(backButton, gbc);
+
+
+    
+
+
+
+
+        // // side panel
+        // JPanel sidePanel = new JPanel(new GridBagLayout());
+        // GridBagConstraints c = new GridBagConstraints();
+        // c.insets = new Insets(5, 5, 10, 10);
+        // c.gridx = 0; c.gridy = 0; c.gridwidth = 2;
+
+        // // title label
+        // sidePanel.add(GUI_Elements.label("Edit Quiz"), c); c.gridy++;
+
+        // // settings panel
+        // sidePanel.add(quizSettingsPanel, c); c.gridy++;
+
+        // // buttons
+        // c.gridwidth = 1;
+        // backButton.addActionListener(this);
+        // saveButton.addActionListener(this);
+        // sidePanel.add(backButton, c); c.gridx++;
+        // sidePanel.add(saveButton, c); c.gridx++;
+
+        // c.weighty = 1.0;
+        // c.fill = GridBagConstraints.BOTH;
+        // sidePanel.add(Box.createVerticalGlue(), c);
+
+        // this.add(sidePanel, BorderLayout.EAST);
+        // this.add(editQuizScrollPane, BorderLayout.CENTER);
     }
 
     @Override

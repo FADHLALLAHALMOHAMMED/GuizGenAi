@@ -227,7 +227,7 @@ abstract class QuestionPanel extends JPanel{
         c.insets = new Insets(10, 10, 10, 10);
         c.anchor = LINE_START;
 
-        JLabel questionLabel = new JLabel(HelperFunctions.toMultiLine(question.questionText, 80));
+        JLabel questionLabel = new JLabel(HelperFunctions.toMultiLine(question.questionText, 150));
         this.add(questionLabel, c); c.gridy++; c.gridy++;
 
         this.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, new Color(0x28557a)));
@@ -252,7 +252,9 @@ class MCQuestionPanel extends QuestionPanel{
         this.question = question;
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(10, 10, 10, 10);
-        c.anchor = LINE_START; c.gridy = 2;
+        c.anchor = GridBagConstraints.LINE_START;
+        c.gridy = 2;
+        c.weightx = 1.0;
 
         char answerNotation = 'A';
         JRadioButton button;
@@ -266,8 +268,8 @@ class MCQuestionPanel extends QuestionPanel{
             answerButtons.add(button);
             this.add(button, c); c.gridy++;
         }
-        // this border helps separate the questions. It is 2 lines one above and one below each question.
-        this.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, new Color(0x28557a)));
+        // this border helps separate the questions.
+        this.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x28557a)));
     }
 
     /**
@@ -295,14 +297,20 @@ class EssayQuestionPanel extends QuestionPanel{
         this.question = question;
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(10, 10, 10, 10);
-        c.anchor = LINE_START; c.gridy = 2;
+        c.anchor = GridBagConstraints.LINE_START; 
+        c.gridy = 2;
+        c.weightx = 1.0;
 
         studentAnswer = new JTextArea();
         studentAnswer.setMaximumSize(new Dimension(420, 120));
         studentAnswer.setPreferredSize(new Dimension(420, 120));
         studentAnswer.setLineWrap(true);
         studentAnswer.setWrapStyleWord(true);
+        c.fill = GridBagConstraints.BOTH;
         this.add(studentAnswer, c);
+
+        this.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x28557a)));
+
     }
 
     /**
@@ -328,13 +336,13 @@ class QuizScrollPane extends JScrollPane {
 
         JPanel quizPanel = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.BOTH;
+        c.weightx = 1.0;
         c.anchor = LINE_START; c.gridx = c.gridy = 0;
         c.insets = new Insets(10, 10, 10, 10);
 
         for(Question question: questions){
-            QuestionPanel questionPanel = question instanceof MCQuestion ?
-                                            new MCQuestionPanel((MCQuestion) question) :
-                                            new EssayQuestionPanel((EssayQuestion) question);
+            QuestionPanel questionPanel = question instanceof MCQuestion ? new MCQuestionPanel((MCQuestion) question) : new EssayQuestionPanel((EssayQuestion) question);
             questionPanels.add(questionPanel);
             quizPanel.add(questionPanel, c); c.gridy++;
         }
@@ -1433,18 +1441,38 @@ class QuizSelectionScrollPane extends JScrollPane implements MouseListener{
         this.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         this.quizzes = quizzes;
         this.window = window;
-
+        
+        
         JPanel quizzesSelectionPanel = new JPanel(new GridBagLayout());
+        quizzesSelectionPanel.setBackground(GUI_Elements.SECONDARY_BACKGROUND); 
         GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 1.0;
         c.gridx = 0; c.gridy = 0;
-        c.insets = new Insets(5, 5, 5, 5);
+        c.insets = new Insets(5, 5, 10, 5);
 
-        for(Quiz quiz : quizzes){
-            QuizPanel quizPanel = new QuizPanel(quiz);
-            quizPanel.addMouseListener(this);
-            quizPanels.add(quizPanel);
-            quizzesSelectionPanel.add(quizPanel, c); c.gridy++;
+        
+        if (quizzes.isEmpty()) {
+
+            JLabel emptyLabel = new JLabel("There are no quizzes to display", SwingConstants.CENTER);
+            emptyLabel.setFont(new Font(GUI_Elements.TEXT_FONT, Font.BOLD, 15));
+
+            c.anchor = GridBagConstraints.CENTER;
+            quizzesSelectionPanel.add(emptyLabel, c);
         }
+        else {
+
+            for(Quiz quiz : quizzes){
+
+                QuizPanel quizPanel = new QuizPanel(quiz);
+                quizPanel.setBackground(Color.WHITE); 
+                quizPanel.addMouseListener(this);
+                quizPanels.add(quizPanel);
+                quizzesSelectionPanel.add(quizPanel, c); 
+                c.gridy++;
+            }
+        }
+
 
         this.setViewportView(quizzesSelectionPanel);
     }
@@ -1477,15 +1505,25 @@ class QuizPanel extends JPanel{
         super(new GridBagLayout());
         this.setPreferredSize(new Dimension(400, 150));
         this.quiz = quiz;
+
+
+        // Grid Management -----------------------------------------------------------------
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(5, 5, 5, 5);
         c.gridx = c.gridy = 0;
-        c.anchor = CENTER;
-        this.add(new JLabel(quiz.title), c);
-        c.anchor = LINE_START; c.gridy++;
-        this.add(new JLabel(String.format("Start Time: %s", quiz.startDateTime.toString())), c);
+        c.anchor = GridBagConstraints.LINE_START;
+        c.weightx = 1.0;
+
+        JLabel titleLabel = new JLabel(quiz.title);
+        titleLabel.setFont(new Font(GUI_Elements.TEXT_FONT, Font.BOLD, 20));
+        this.add(titleLabel, c);
+        
         c.gridy++;
-        this.add(new JLabel(String.format("End Time: %s", quiz.endDateTime.toString())), c);
+        this.add(new JLabel(String.format("Date:  %s", quiz.startDateTime.toString().split(" ")[0])), c);
+        c.gridy++;
+        this.add(new JLabel(String.format("Start Time:  %s", quiz.startDateTime.toString().split(" ")[1])), c);
+        c.gridy++;
+        this.add(new JLabel(String.format("End Time:  %s", quiz.endDateTime.toString().split(" ")[1])), c);
     }
 }
 
@@ -1588,15 +1626,16 @@ class QuizDisplayTable extends JPanel implements ActionListener{
         // check the documentation of the 'getQuizzesByClass()' function for more info.
         Database.getQuizzesByClass(class_.id, student.id, quizzes, submissions);
         Vector<String> headers = new Vector<>(Arrays.asList("ID", "Title", "Start Date", "End Date", "Action"));
-
+        this.setBackground(GUI_Elements.APP_BACKGROUND);
+        
         Table table = new Table(headers);
-        table.setBackground(new Color(238,238,228));
         int row = 0;
         int col = 0;
         for(int i = 0; i < quizzes.size(); i++){
             Quiz quiz = quizzes.get(i);
             Submission submission = submissions.get(i);
-
+            
+            table.setBorder(BorderFactory.createLineBorder(GUI_Elements.APP_BACKGROUND));
             table.insert(new JLabel(Integer.toString(quiz.id), SwingConstants.CENTER), row, col++);
             table.insert(new JLabel(quiz.title, SwingConstants.CENTER), row, col++);
             table.insert(new JLabel(quiz.startDateTime.toString(), SwingConstants.CENTER), row, col++);

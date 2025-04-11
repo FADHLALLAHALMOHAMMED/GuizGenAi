@@ -312,10 +312,15 @@ public class Database {
 
     public static String addQuiz(String title, java.util.Date startTime, java.util.Date endTime, Vector<Class> classes,
                                  Vector<Question> questions, int instructorId, String embeddingsHash){
+                                    
         if(classes.isEmpty()) return "No class selected: Quiz must be assigned to at least one class.";
 
         // test if start or end date is in the past
-        Date CurrentDateTime = new Date(System.currentTimeMillis());
+        Timestamp CurrentDateTime = new Timestamp(System.currentTimeMillis());
+
+        System.out.println("Current time: " + CurrentDateTime.toString());
+        System.out.println("Start time: " + startTime.toString());
+        System.out.println("End time: " + endTime.toString());
         if(startTime.before(CurrentDateTime) || endTime.before(CurrentDateTime))
             return "Invalid Start or End Time: Quiz start or end time cannot be in the past.";
         // test if the quiz ends before is starts

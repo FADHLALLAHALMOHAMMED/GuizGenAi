@@ -32,10 +32,10 @@ public class HelperFunctions {
         if(!phoneNumber.matches("^(\\+966|0)5[0-9]{8}$")) return "invalid Phone Number";
 
         // TODO: add password requirements
-        switch(Database.checkUser(email, phoneNumber)){
-            case 0: return "Email Already Registered.";
-            case 1: return "Phone Number Already Registered.";
-        }
+        int result = Database.checkUser(email, phoneNumber);
+        if((result & 3) == 3) return "Both Email Address and Phone Number are already registered";
+        else if((result & 1) > 0) return "Email Address is already registered with an account";
+        else if((result & 2) > 0) return "Phone Number is already registered with an account";
         return null;
     }
 
@@ -226,6 +226,17 @@ public class HelperFunctions {
     }
 
     /**
+     *
+     * @param message the message displayed to the user in the dialog
+     * @param window the parent component
+     * @return true when the user cancels
+     */
+    public static boolean confirmUserAction(String message, Window window){
+        int response = JOptionPane.showConfirmDialog(window, message, "confirm action", JOptionPane.YES_NO_OPTION);
+        return response == 1;
+    }
+
+    /**
      * Gets the status of a students quiz, there are for possible statuses:
      *  1. Quiz time hasn't started yet.
      *  2. Student hasn't completed Quiz yet. (if the student didn't take the quiz, but there is still time)
@@ -386,5 +397,40 @@ public class HelperFunctions {
             points += 10 * studentMark; // 10 points for every student mark more than half the full mark.
         Database.addPointsToStudent(studentId, points);
 
+    }
+
+    public static String handleUserInfoEdit(Window window, String email, String phoneNumber, String password, String password2){
+        User user = window.getUser();
+
+        // ask user for password before operation.
+        String confirmPassword = JOptionPane.showInputDialog(window,
+                        "Enter Password to Update information: ",
+                        "Enter password", JOptionPane.PLAIN_MESSAGE);
+        // cancel if password is incorrect.
+        if(Database.login(user.email, confirmPassword) == null) return "Incorrect Password";
+
+        // cancel operation if invalid user input.
+        if(!password.equals("") && !password.equals(password2)) return "Passwords do not match";
+        if(!email.matches("^.{3,24}@.{2,16}\\..{2,8}$")) return "Invalid Email Address.";
+        if(!phoneNumber.matches("^(\\+966|0)5[0-9]{8}$")) return "invalid Phone Number";
+        // todo: implement a function that checks of the password matches certain criteria.
+
+        // cancel operation if new email and phone number are already registered with a different account.
+        int status = Database.checkUser(email, phoneNumber);
+        if(!user.email.equalsIgnoreCase(email) && (status & 1) > 0) // if the user wants to change email, but the new email is already registered.
+            return "Email Address is already registered with an account";
+        else if(!user.phoneNumber.equalsIgnoreCase(phoneNumber) && (status & 2) > 0) // if the user wants to change phone, but the new phone number is already registered.
+            return "Phone Number is already registered with an account";
+
+        // update user email and phoneNumber in the database.
+        Database.updateEmailAndPhone(user, email, phoneNumber);
+
+        if(!password.equals("")) // change password if the user entered a new password.
+            Database.updateUserPassword(user, password);
+
+        // make sure the User object in the program has the update information.
+        user.email = email;
+        user.phoneNumber = phoneNumber;
+        return null;
     }
 }

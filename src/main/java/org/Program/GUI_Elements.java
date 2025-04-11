@@ -80,6 +80,12 @@ public class GUI_Elements {
         return textField;
     }
 
+    public static JPasswordField passwordField(){
+        JPasswordField passwordField = new JPasswordField();
+        passwordField.setPreferredSize(textFieldSize1);
+        return passwordField;
+    }
+
     public static JButton button(String text){
         JButton button = new JButton(text);
 
@@ -109,15 +115,31 @@ class LabeledTextField extends JPanel{
     JTextField textField = GUI_Elements.textField();
     LabeledTextField(String labelText){
         super(new GridBagLayout());
+        this.setOpaque(false);
         GridBagConstraints c = new GridBagConstraints();
         c.anchor = GridBagConstraints.LINE_START;
         c.gridx = 0; c.gridy = 0;
 
-        JLabel label = new JLabel(labelText);
-        this.add(label, c); c.gridy++;
+        this.add(GUI_Elements.label(labelText), c); c.gridy++;
         this.add(textField, c);
     }
     public String getText(){return textField.getText();}
+}
+
+
+class LabeledPasswordField extends JPanel{
+    JPasswordField passwordField = GUI_Elements.passwordField();
+    LabeledPasswordField(String labelText){
+        super(new GridBagLayout());
+        this.setOpaque(false);
+        GridBagConstraints c = new GridBagConstraints();
+        c.anchor = GridBagConstraints.LINE_START;
+        c.gridx = 0; c.gridy = 0;
+
+        this.add(GUI_Elements.label(labelText), c); c.gridy++;
+        this.add(passwordField, c);
+    }
+    public String getText(){return new String(passwordField.getPassword());}
 }
 
 /**
@@ -865,8 +887,9 @@ class ManageStudentsListPanel extends JPanel implements ActionListener, ListSele
     public void valueChanged(ListSelectionEvent e) {
         // when an item is selected in a list, 2 events happen simultaneously: a deselection and a selection event.
         if(e.getValueIsAdjusting()) return;         // returns if the event is a deselection event.
-        Student selectedStudent = students.get(studentList.getSelectedIndex());
-        window.switchPage(new ManageStudentPage(window, selectedStudent, class_));
+        window.setCurrentStudent(students.get(studentList.getSelectedIndex()));
+        window.setCurrentClass(class_);
+        window.switchPage(new ManageStudentPage(window));
     }
 
     /**
@@ -1368,33 +1391,28 @@ class Table extends JPanel{
  * includes a button next to quizzes completed by the student that allows the instructor to navigate to the
  *  'ViewStudentSubmissionPage' to view the student's submission.
  */
-class QuizDisplayTable extends JPanel implements ActionListener{
+class QuizDisplayTable extends JPanel implements ActionListener{ // requires student, optionally needs class
     Window window;
-    Class class_;
     Student student;
-    Vector<Quiz> quizzes = new Vector<>();
-    Vector<Submission> submissions = new Vector<>();
+    Vector<Quiz> quizzes;
+    Vector<Submission> submissions;
     Vector<JButton> buttons = new Vector<>();
 
     /**
      * @param window the window object of the program
-     * @param student the student about whom the information will be displayed in the table.
-     * @param class_ the class whose quizzes will be displayed in the table.
+     * @param quizzes the student about whom the information will be displayed in the table.
+     * @param submissions the class whose quizzes will be displayed in the table.
      */
-    QuizDisplayTable(Window window, Student student, Class class_){
+    QuizDisplayTable(Window window, Vector<Quiz> quizzes, Vector<Submission> submissions){
         this.window = window;
-        this.class_ = class_;
-        this.student = student;
-
-        // retrieves a vector of quizzes and a vector of the students submissions for a specific student in a specific class.
-        // notice that the function returns by reference -not by value- because we need to get 2 values.
-        // take note that the quizzes and submissions are, and must be, of the same size for the following code to function.
-        // check the documentation of the 'getQuizzesByClass()' function for more info.
-        Database.getQuizzesByClass(class_.id, student.id, quizzes, submissions);
+        this.quizzes = quizzes;
+        this.student = window.getCurrentStudent();
+        this.submissions = submissions;
         Vector<String> headers = new Vector<>(Arrays.asList("ID", "Title", "Start Date", "End Date", "Action"));
 
         Table table = new Table(headers);
         table.setBackground(new Color(238,238,228));
+
         int row = 0;
         int col = 0;
         for(int i = 0; i < quizzes.size(); i++){
@@ -1429,7 +1447,10 @@ class QuizDisplayTable extends JPanel implements ActionListener{
     public void actionPerformed(ActionEvent e) {
         for(int i = 0; i < buttons.size(); i++){
             if(e.getSource() == buttons.get(i)){
-                window.switchPage(new ViewStudentSubmissionPage(window, student, quizzes.get(i), submissions.get(i), class_));
+                window.setCurrentStudent(student);
+                window.setCurrentSubmission(submissions.get(i));
+                window.quiz = quizzes.get(i);
+                window.switchPage(new ViewStudentSubmissionPage(window));
             }
         }
     }
@@ -1441,10 +1462,16 @@ class QuizDisplayTable extends JPanel implements ActionListener{
  * includes information such as student's answer, grade for answer, justification for grade, etc.
  */
 class QuizSubmissionDisplay extends JPanel{
+    public final String[] grades = {"<no credit>", "<partial credit>", "<full credit>"};
+    public Vector<EssayQuestion> essayQuestions = new Vector<>();
+    public Vector<JTextArea> justifications = new Vector<>();
+    public Vector<JComboBox<String>> essayGrades = new Vector<>();
+
     /**
      * @param submissionId the ID of the submission whose information will be displayed.
+     * @param editable whether the user should be allowed to edit essay question grades, and grade justifications.
      */
-    QuizSubmissionDisplay(int submissionId){
+    QuizSubmissionDisplay(int submissionId, boolean editable){
         Vector<Question> questionsAndAnswers = Database.getStudentAnswers(submissionId);
         Vector<String> headers = new Vector<>(Arrays.asList("Number", "Question Type", "Question Text", "Students Answer", "Correct Answer / Grade Justification", "Mark / Grade"));
 
@@ -1464,8 +1491,30 @@ class QuizSubmissionDisplay extends JPanel{
                 table.insert(new JLabel(answerIsCorrect, SwingConstants.CENTER), row++, col);
             } else if(question instanceof EssayQuestion eq){
                 table.insert(textArea(eq.studentAnswer), row, col++);
-                table.insert(textArea(eq.gradeJustification), row, col++);
-                table.insert(new JLabel(eq.grade, SwingConstants.CENTER), row++, col);
+
+                JTextArea justificationTextArea = new JTextArea(eq.gradeJustification);
+                JComboBox<String> gradeComboBox =  new JComboBox<>(grades);
+
+                gradeComboBox.setOpaque(false);
+                gradeComboBox.setFocusable(false);
+
+                table.insert(textArea(justificationTextArea), row, col++);
+                table.insert(gradeComboBox, row++, col);
+
+                int defaultSelection = 0;
+                if(eq.grade.equalsIgnoreCase(grades[2])) defaultSelection = 2;
+                else if(eq.grade.equalsIgnoreCase(grades[1])) defaultSelection = 1;
+                gradeComboBox.setSelectedIndex(defaultSelection);
+
+                if(editable){       // if displayed to the instructor;
+                    essayQuestions.add(eq);
+                    justifications.add(justificationTextArea);
+                    essayGrades.add(gradeComboBox);
+                    justificationTextArea.setEditable(true);
+                } else {            // if displayed to the student.
+                    gradeComboBox.setEditable(false);
+                    justificationTextArea.setEditable(false);
+                }
             }
             col = 0;
         }
@@ -1481,8 +1530,8 @@ class QuizSubmissionDisplay extends JPanel{
         JTextArea textArea = new JTextArea(text);
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
-        textArea.setEditable(false);
         textArea.setOpaque(false);
+        textArea.setEditable(false);
         JScrollPane textAreaScroll = new JScrollPane(textArea);
         textAreaScroll.setPreferredSize(new Dimension(205, 100));
         textAreaScroll.setOpaque(false);
@@ -1490,6 +1539,28 @@ class QuizSubmissionDisplay extends JPanel{
         textAreaScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         textAreaScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         return textAreaScroll;
+    }
+
+    public JScrollPane textArea(JTextArea textArea){
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
+        textArea.setOpaque(false);
+        textArea.setEditable(false);
+        JScrollPane textAreaScroll = new JScrollPane(textArea);
+        textAreaScroll.setPreferredSize(new Dimension(205, 100));
+        textAreaScroll.setOpaque(false);
+        textAreaScroll.getViewport().setOpaque(false);
+        textAreaScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        textAreaScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        return textAreaScroll;
+    }
+
+    public Vector<EssayQuestion> getEditedQuestions(){
+        for(int i = 0; i < essayQuestions.size(); i++){
+            essayQuestions.get(i).gradeJustification = justifications.get(i).getText();
+            essayQuestions.get(i).grade = grades[essayGrades.get(i).getSelectedIndex()];
+        }
+        return essayQuestions;
     }
 }
 

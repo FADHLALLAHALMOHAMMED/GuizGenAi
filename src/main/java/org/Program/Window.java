@@ -11,6 +11,8 @@ import java.util.Vector;
 public class Window extends JFrame{
     private Page currentPage;
     private Class currentClass;
+    private Student currentStudent;
+    private Submission currentSubmission;
     private User user;
     public Thread thread1;
     public Quiz quiz;
@@ -37,7 +39,12 @@ public class Window extends JFrame{
     public User getUser(){return this.user;}
     public Page getPage(){return this.currentPage;}
     public Class getCurrentClass() {return currentClass;}
+    public Student getCurrentStudent() {return currentStudent;}
+    public Submission getCurrentSubmission() {return currentSubmission;}
+
     public void setCurrentClass(Class currentClass) {this.currentClass = currentClass;}
+    public void setCurrentStudent(Student student) {this.currentStudent = student;}
+    public void setCurrentSubmission(Submission submission) {this.currentSubmission = submission;}
 
 }
 

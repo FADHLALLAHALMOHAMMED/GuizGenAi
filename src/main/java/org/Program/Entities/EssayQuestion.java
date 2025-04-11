@@ -26,6 +26,11 @@ public class EssayQuestion extends Question {
 
     @Override
     public String toString() {
-        return this.questionText;
+        StringBuilder str = new StringBuilder(this.questionText).append("\n");
+        if(grade != null)
+            str.append("Grade: ").append(this.grade).append("\n");
+        if(gradeJustification != null)
+            str.append("Justification for grade: ").append(this.gradeJustification).append("\n");
+        return str.toString();
     }
 }

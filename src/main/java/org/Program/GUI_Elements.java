@@ -15,7 +15,10 @@ import java.awt.event.*;
 import java.util.*;
 
 import static java.awt.GridBagConstraints.CENTER;
+import static java.awt.GridBagConstraints.HORIZONTAL;
+import static java.awt.GridBagConstraints.LAST_LINE_END;
 import static java.awt.GridBagConstraints.LINE_START;
+import static java.awt.GridBagConstraints.NONE;
 
 
 /** this file includes the class "GUI_Elements" which contains functions that simplify the repeated creation of Components
@@ -53,6 +56,15 @@ public class GUI_Elements {
 
         JPanel panel = new JPanel(layout);
         panel.setBackground(APP_BACKGROUND);
+        panel.setForeground(TEXT_FOREGROUND);
+        
+        return panel;
+    }
+
+    public static JPanel secondaryPanel(LayoutManager layout) {
+
+        JPanel panel = new JPanel(layout);
+        panel.setBackground(SECONDARY_BACKGROUND);
         panel.setForeground(TEXT_FOREGROUND);
         
         return panel;
@@ -183,6 +195,11 @@ class DatePicker extends JPanel implements ItemListener{
         c.gridx = 0; c.gridy = 0;
         c.insets = new Insets(5, 5, 5, 5);
 
+        yearList.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
+        monthList.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
+        dayList.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
+        hourList.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
+        minuteList.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
         this.add(yearList, c); c.gridx++;
         this.add(monthList, c); c.gridx++;
         this.add(dayList, c); c.gridx++;
@@ -232,7 +249,7 @@ abstract class QuestionPanel extends JPanel{
         c.insets = new Insets(10, 10, 10, 10);
         c.anchor = LINE_START;
 
-        JLabel questionLabel = new JLabel(HelperFunctions.toMultiLine(question.questionText, 80));
+        JLabel questionLabel = new JLabel(HelperFunctions.toMultiLine(question.questionText, 150));
         this.add(questionLabel, c); c.gridy++; c.gridy++;
 
         this.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, new Color(0x28557a)));
@@ -257,7 +274,9 @@ class MCQuestionPanel extends QuestionPanel{
         this.question = question;
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(10, 10, 10, 10);
-        c.anchor = LINE_START; c.gridy = 2;
+        c.anchor = GridBagConstraints.LINE_START;
+        c.gridy = 2;
+        c.weightx = 1.0;
 
         char answerNotation = 'A';
         JRadioButton button;
@@ -271,8 +290,8 @@ class MCQuestionPanel extends QuestionPanel{
             answerButtons.add(button);
             this.add(button, c); c.gridy++;
         }
-        // this border helps separate the questions. It is 2 lines one above and one below each question.
-        this.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, new Color(0x28557a)));
+        // this border helps separate the questions.
+        this.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x28557a)));
     }
 
     /**
@@ -300,14 +319,20 @@ class EssayQuestionPanel extends QuestionPanel{
         this.question = question;
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(10, 10, 10, 10);
-        c.anchor = LINE_START; c.gridy = 2;
+        c.anchor = GridBagConstraints.LINE_START; 
+        c.gridy = 2;
+        c.weightx = 1.0;
 
         studentAnswer = new JTextArea();
         studentAnswer.setMaximumSize(new Dimension(420, 120));
         studentAnswer.setPreferredSize(new Dimension(420, 120));
         studentAnswer.setLineWrap(true);
         studentAnswer.setWrapStyleWord(true);
+        c.fill = GridBagConstraints.BOTH;
         this.add(studentAnswer, c);
+
+        this.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x28557a)));
+
     }
 
     /**
@@ -333,6 +358,8 @@ class QuizScrollPane extends JScrollPane {
 
         JPanel quizPanel = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.BOTH;
+        c.weightx = 1.0;
         c.anchor = LINE_START; c.gridx = c.gridy = 0;
         c.insets = new Insets(10, 10, 10, 10);
 
@@ -379,9 +406,11 @@ abstract class EditQuestionPane extends JPanel implements ActionListener {
     Question question;
     int questionIndex; // the index(order) of this pane in its parent scroll pane.
     JTextArea questionTextArea;
-    JButton moveUpButton = GUI_Elements.button("Move up ^");
-    JButton moveDownButton = GUI_Elements.button("Move Down V");
+    JButton moveUpButton = GUI_Elements.button("Move up");
+    JButton moveDownButton = GUI_Elements.button("Move Down");
     JButton deleteButton = GUI_Elements.button("Delete Question");
+    private final JPanel buttonsPanel;
+    private final GridBagConstraints c = new GridBagConstraints();
     boolean first; // a flag for if this is the first question in the questions page
     boolean last; // if this is the last question.
 
@@ -399,26 +428,49 @@ abstract class EditQuestionPane extends JPanel implements ActionListener {
         this.parent = parent;
         this.first = questionIndex == 0;
         this.last = questionIndex == parent.numOfQuestions - 1;
+        this.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
 
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(10, 10, 10, 10);
-        c.anchor = LINE_START;
-
-        // placing Buttons
-        c.gridx = 3; c.gridy = 0; c.gridheight = 2;
+        
         moveUpButton.addActionListener(this);
         moveDownButton.addActionListener(this);
         deleteButton.addActionListener(this);
 
-        if(!first) this.add(moveUpButton, c); // only display the move up button if this isn't the first question pane.
 
-        c.gridy = 2;
-        if(!last) this.add(moveDownButton, c); // only display the move down button if this isn't the last question pane.
-
-        c.gridy = 4;
+        c.insets = new Insets(10, 10, 10, 10);
+        c.anchor = CENTER;
+        c.fill = NONE;
+        c.gridx = 4; c.gridy = 3;
+        c.weightx = 0;
+        c.weighty = 0;
+        
+        // buttons panel ------------------------------------------------------------------------------
+        buttonsPanel = GUI_Elements.panel(new GridBagLayout());
+        buttonsPanel.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
+        
+        
+        
+        if(!first) {
+            c.insets = new Insets(10, 10, 5, 10);
+            buttonsPanel.add(moveUpButton, c); // only display the move up button if this isn't the first question pane.
+        }
+        
+        
+        if(!last) {
+            c.insets = new Insets(0, 10, 5, 10);
+            c.gridy++;
+            buttonsPanel.add(moveDownButton, c); // only display the move down button if this isn't the last question pane.m
+        }
+        
+        c.gridy++;
+        c.insets = new Insets(0, 10, 10, 10);
         deleteButton.setBackground(new Color(192, 64, 64));
-        this.add(deleteButton, c);
+        buttonsPanel.add(deleteButton, c);
 
+        c.gridx = 4; c.gridy = 2;
+        c.fill = GridBagConstraints.BOTH;
+        c.insets = new Insets(5, 10, 10, 5);
+
+        this.add(buttonsPanel, c);
         this.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, new Color(0x28557a)));
     }
 
@@ -449,26 +501,28 @@ abstract class EditQuestionPane extends JPanel implements ActionListener {
      * @param newQuestionIndex: the new position(order) of this panel in the EditQuizScrollPane after the update.
      */
     public void update(int newQuestionIndex){
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(10, 10, 10, 10);
-        c.anchor = LINE_START; c.gridx = 3; c.gridy = 0; c.gridheight = 2;
+
         int lastIndex = parent.numOfQuestions - 1; // the index of the last question pane in the parent container.
+        
+        c.gridx = 4; c.gridy = 3;
 
         if(first && newQuestionIndex != 0){    // if this used to be the first panel, but is no longer the first.
-            this.add(moveUpButton, c);             // and the move up button.
+            c.insets = new Insets(10, 10, 5, 10);
+            buttonsPanel.add(moveUpButton, c);             // and the move up button.
             first = false;
 
         } else if(!first && newQuestionIndex == 0){ // if this wasn't the first panel, but became the first.
-            this.remove(moveUpButton);          // remove the move up button, since it's already the highest panel.
+            buttonsPanel.remove(moveUpButton);          // remove the move up button, since it's already the highest panel.
             first = true;
 
         } else if(last && newQuestionIndex != lastIndex){ // if this used to be the last panel, But no longer is:
-            c.gridy = 2;
-            this.add(moveDownButton, c);
+            c.insets = new Insets(0, 10, 5, 10);
+            c.gridy = 4;
+            buttonsPanel.add(moveDownButton, c);
             last = false;
 
         } else if(!last && newQuestionIndex == lastIndex){ // if panel is now the last one
-            this.remove(moveDownButton);
+            buttonsPanel.remove(moveDownButton);
             last = true;
         }
         questionIndex = newQuestionIndex;
@@ -482,58 +536,115 @@ abstract class EditQuestionPane extends JPanel implements ActionListener {
  *  4 JText Fields to Edit the Text of the 4 answer choices
  *  4 radio buttons to set which of the 4 answer choices is the correct one.
  */
-class EditMCQuestionPane extends EditQuestionPane{
+class EditMCQuestionPane extends EditQuestionPane {
     Vector<JTextField> answers = new Vector<>();    // a vector of JTextFields Storing tha answer Choices Text.
     Vector<JRadioButton> correctAnswerSelectors = new Vector<>(); // storing the radio buttons for setting the correct answer.
+
     EditMCQuestionPane(MCQuestion question, EditQuizScrollPane parent, int questionIndex) {
         super(question, parent, questionIndex);
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(10, 10, 10, 10);
-        c.anchor = LINE_START; c.gridwidth = 2;
+        
+        JLabel questionTextLabel = new JLabel("Question " + questionIndex);
+        JLabel correctAnswerLabel = new JLabel("Correct Answer");
+        JLabel answerChoicesLabel = new JLabel("Answer Choices:");
 
-        JLabel questionTextLabel = new JLabel("(" + questionIndex + ") Question Text:"); c.gridwidth = 1;
-        JLabel correctAnswerLabel = new JLabel("<html>Correct<br/>Answer:</html>");
-        JLabel answerChoicesLabel = new JLabel("Answer Choices Text:");
-
-        // placing labels
-        c.gridx = 0; c.gridy = 0;
-        this.add(questionTextLabel, c); c.gridy = 2;
-        this.add(correctAnswerLabel, c); c.gridx = 1;
-        this.add(answerChoicesLabel, c);
-
-        // placing QuestionText Area
-        c.gridx = 0; c.gridy = 1; c.gridwidth = 2;
-
+        // text Areas
         questionTextArea = new JTextArea(question.questionText); // the display and allow editing of the question Text.
         questionTextArea.setMaximumSize(new Dimension(420, 120));
         questionTextArea.setPreferredSize(new Dimension(420, 120));
         questionTextArea.setLineWrap(true);
         questionTextArea.setWrapStyleWord(true);
-        this.add(questionTextArea, c);
-        c.gridwidth = 1;
 
+
+        // radiobuttons panel -------------------------------------------------------------------------
+        JPanel radioButtonsPanel = GUI_Elements.panel(new GridBagLayout());
+        radioButtonsPanel.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
+        GridBagConstraints radioC = new GridBagConstraints();
+        radioC.gridx = 0; radioC.gridy = 0;
+        radioC.weightx = 1.0;
+        radioC.weighty = 1.0;
+        radioC.anchor = GridBagConstraints.WEST;
+        radioC.insets = new Insets(5, 10, 5, 5);
+        
+        radioButtonsPanel.add(correctAnswerLabel, radioC);
+        
         // placing radio buttons
-        c.gridx = 0; c.gridy = 3; c.anchor = CENTER;
+        radioC.gridy++;
+        radioC.anchor = GridBagConstraints.CENTER;
         ButtonGroup buttonGroup = new ButtonGroup();
-        for(char i = 'A'; i < 'E'; i++){    // place the radio buttons (by default, the correct one as specified by the LLM Reply is selected)
-            JRadioButton correctAnswerSelectorButton = new JRadioButton(" " + i + " ");
+        for (char i = 'A'; i < 'E'; i++) {
+            JRadioButton correctAnswerSelectorButton = GUI_Elements.radioButton(" " + i + " ");
+            correctAnswerSelectorButton.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
+            correctAnswerSelectorButton.setForeground(Color.BLACK);
             buttonGroup.add(correctAnswerSelectorButton);
             correctAnswerSelectors.add(correctAnswerSelectorButton);
-            this.add(correctAnswerSelectorButton, c); c.gridy++;
+            radioButtonsPanel.add(correctAnswerSelectorButton, radioC);
+            radioC.gridy++;
         }
-        correctAnswerSelectors.get(question.correctAnswerIndex).setSelected(true);
-
+        
+        // choices text fields panel ---------------------------------------------------------------------
+        JPanel textFieldsPanel = GUI_Elements.panel(new GridBagLayout());
+        textFieldsPanel.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
+        GridBagConstraints textFieldsC = new GridBagConstraints();
+        textFieldsC.gridx = 0; textFieldsC.gridy = 0;
+        textFieldsC.weightx = 1.0;
+        textFieldsC.weighty = 1.0;
+        textFieldsC.anchor = GridBagConstraints.WEST;
+        textFieldsC.insets = new Insets(5, 5, 5, 5);
+        
+        textFieldsPanel.add(answerChoicesLabel, textFieldsC);
+        
         // placing text fields
-        c.gridx = 1; c.gridy = 3; c.anchor = LINE_START;
-        for(String answerChoiceText: question.answerChoices){ // place the answer choice JTextFields with the text
+        textFieldsC.insets = new Insets(0, 0, 5, 0);
+        textFieldsC.fill = GridBagConstraints.HORIZONTAL;
+        textFieldsC.gridy++;
+        for (String answerChoiceText : question.answerChoices) {
             JTextField answerChoiceTextField = GUI_Elements.textField();
             answerChoiceTextField.setText(answerChoiceText);
-            answerChoiceTextField.setSize(80, 20);
+            answerChoiceTextField.setPreferredSize(new Dimension(500, 25)); // Adjusted size
             answers.add(answerChoiceTextField);
-            this.add(answerChoiceTextField, c); c.gridy++;
+            textFieldsPanel.add(answerChoiceTextField, textFieldsC);
+            textFieldsC.gridy++;
         }
+        
 
-        this.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, new Color(0x28557a)));
+
+        // placing labels
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(10, 10, 10, 10);
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 1.0;
+        c.weighty = 0.0;
+        c.anchor = GridBagConstraints.WEST;
+        c.gridwidth = 1;
+        c.insets = new Insets(10, 10, 5, 10);
+        c.gridx = 0;
+        c.gridy = 0;
+        
+        
+        this.add(questionTextLabel, c);
+        
+        c.insets = new Insets(0, 10, 5, 5);
+        c.gridy++;
+        c.gridwidth = 4;
+        c.anchor = GridBagConstraints.CENTER;
+        this.add(questionTextArea, c);
+        
+        c.gridwidth = 1;
+        c.insets = new Insets(5, 10, 10, 5);
+        c.gridy++;
+        c.fill = GridBagConstraints.BOTH;
+        this.add(radioButtonsPanel, c);
+        
+        c.gridx++;
+        c.weightx = 10;
+        this.add(textFieldsPanel, c);
+
+        
+        
+        
+        
+        c.gridy++;
+        this.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x28557a)));
     }
 
     /**
@@ -564,16 +675,22 @@ class EditEssayQuestionPane extends EditQuestionPane{
         super(question, parent, questionIndex);
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(10, 10, 10, 10);
-        c.anchor = LINE_START; c.gridwidth = 2;
+        c.anchor = GridBagConstraints.WEST;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridwidth = 1;
+        c.weightx = 1.0;
+        c.weighty = 1.0;
 
-        JLabel questionTextLabel = new JLabel("(" + questionIndex + ") Question Text:"); c.gridwidth = 1;
+        JLabel questionTextLabel = new JLabel("Question " + questionIndex);
 
         // placing labels
         c.gridx = 0; c.gridy = 0;
         this.add(questionTextLabel, c);
 
         // placing QuestionText Area
-        c.gridx = 0; c.gridy = 1; c.gridwidth = 2;  c.gridheight = 5;
+        c.gridx = 0; c.gridy = 1;
+        c.gridwidth = 4;
+        c.gridheight = 5;
 
         questionTextArea = new JTextArea(question.questionText);
         questionTextArea.setMaximumSize(new Dimension(420, 300));
@@ -582,6 +699,8 @@ class EditEssayQuestionPane extends EditQuestionPane{
         questionTextArea.setWrapStyleWord(true);
         this.add(questionTextArea, c);
         c.gridwidth = 1;
+        this.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x28557a))); // Remove top border   this.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, new Color(0x28557a)));
+
     }
 
     /**
@@ -602,19 +721,24 @@ class EditEssayQuestionPane extends EditQuestionPane{
  * allows the instructor the add, edit, remove, and move questions.
  */
 class EditQuizScrollPane extends JScrollPane{
+
     Vector<EditQuestionPane> editQuestionPanes = new Vector<>();
     int numOfQuestions;
-    JPanel editQuizPanel = new JPanel(new GridBagLayout());
+    JPanel editQuizPanel = GUI_Elements.panel(new GridBagLayout());
+
     EditQuizScrollPane(Vector<Question> questions){
         this.setPreferredSize(new Dimension(700, 750));
         this.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         this.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+
+        editQuizPanel.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
 
         numOfQuestions = questions.size();
 
         GridBagConstraints c = new GridBagConstraints();
         c.anchor = LINE_START; c.gridy = 0;
         c.weightx = 1.0;
+        c.fill = GridBagConstraints.HORIZONTAL;
         c.insets = new Insets(10, 10, 10, 10);
 
         int i = 0;
@@ -638,53 +762,62 @@ class EditQuizScrollPane extends JScrollPane{
      * @param paneIndex1: the index position of the first EditQuestionPane to be switched.
      * @param paneIndex2: the index position of the second EditQuestionPane to be switched.
      */
-    public void switchPanes(int paneIndex1, int paneIndex2){
+    public void switchPanes(int paneIndex1, int paneIndex2) {
         GridBagConstraints c = new GridBagConstraints();
-        c.anchor = LINE_START;
-        c.insets = new Insets(10, 10, 10, 10);
+        c.anchor = LINE_START; // Ensure consistent alignment
+        c.fill = GridBagConstraints.HORIZONTAL; // Ensure components fill horizontally
+        c.insets = new Insets(10, 10, 10, 10); // Consistent insets for spacing
 
-        editQuizPanel.remove(editQuestionPanes.get(paneIndex1)); // remove both components for layout
+        // Remove both components from the layout
+        editQuizPanel.remove(editQuestionPanes.get(paneIndex1));
         editQuizPanel.remove(editQuestionPanes.get(paneIndex2));
 
+        // Re-add the components in swapped positions
         c.gridy = paneIndex1;
-        editQuizPanel.add(editQuestionPanes.get(paneIndex2), c); // add the second one in place of the first.
+        editQuizPanel.add(editQuestionPanes.get(paneIndex2), c);
         c.gridy = paneIndex2;
-        editQuizPanel.add(editQuestionPanes.get(paneIndex1), c); // and the first in place of the second.
+        editQuizPanel.add(editQuestionPanes.get(paneIndex1), c);
 
-
-        editQuestionPanes.get(paneIndex1).update(paneIndex2); // update both components (GUI and attributes)
+        // Update the question panes
+        editQuestionPanes.get(paneIndex1).update(paneIndex2);
         editQuestionPanes.get(paneIndex2).update(paneIndex1);
 
-        // also swap the location of the elements in the vector to maintain consistency.
         HelperFunctions.swapElements(editQuestionPanes, paneIndex1, paneIndex2);
 
-        this.editQuizPanel.updateUI();
-        this.repaint();
+        editQuizPanel.revalidate();
+        editQuizPanel.repaint();
     }
 
     /**
      * handles deletion of a panel, and updating the UI of the other panels to reflect the necessary changes.
      * @param index: index of the panel to be deleted.
      */
-    public void delete(int index){ // index of panel to delete
+    public void delete(int index) { // index of panel to delete
         GridBagConstraints c = new GridBagConstraints();
         c.anchor = LINE_START;
+        c.fill = GridBagConstraints.HORIZONTAL;
         c.insets = new Insets(10, 10, 10, 10);
-        c.gridy = index;
+
 
         editQuizPanel.remove(editQuestionPanes.get(index));
-        for(int i = index; i < numOfQuestions - 1; i++){
-            editQuizPanel.add(editQuestionPanes.get(i + 1), c); c.gridy++;  // shift the panel's position in the scroll panel to overwrite the panel we want to delete.
-            editQuestionPanes.set(i, editQuestionPanes.get(i + 1));         // also shift the panel's position in the vector to maintain consistency.
-            editQuestionPanes.get(i).update(i);                             // update the editQuestionPanel's attributes and GUI
+
+
+        for (int i = index; i < numOfQuestions - 1; i++) {
+            c.gridy = i;
+            editQuizPanel.add(editQuestionPanes.get(i + 1), c);
+            editQuestionPanes.set(i, editQuestionPanes.get(i + 1));
+            editQuestionPanes.get(i).update(i);
         }
-        editQuestionPanes.removeElementAt(numOfQuestions-1);           // the shifting operation duplicates the last element, get rid of the duplicate.
-        numOfQuestions--;                                                    // decrement the size since we deleted a question.
+
+
+        editQuestionPanes.removeElementAt(numOfQuestions - 1);
+        numOfQuestions--;
 
         editQuestionPanes.get(numOfQuestions - 1).update(numOfQuestions - 1);
 
-        this.editQuizPanel.updateUI();
-        this.repaint();
+        //
+        editQuizPanel.revalidate();
+        editQuizPanel.repaint();
     }
 
     /**
@@ -1179,20 +1312,28 @@ class RemoveStudentListPanel extends JPanel implements ActionListener, ListSelec
 /**
  *  allows the instructor to set general exam parameters, such as: exam title, quiz start end times, and classes taking this quiz.
  */
-class QuizSettingsPanel extends JPanel implements ListSelectionListener{
-    LabeledTextField quizTitleTextField = new LabeledTextField("Quiz Title:");
+class QuizSettingsPanel extends JPanel implements ListSelectionListener {
+
+    JPanel quizTitlePanel = GUI_Elements.secondaryPanel(new GridBagLayout());
+    JPanel startQuizDatePanel = GUI_Elements.secondaryPanel(new GridBagLayout());
+    JPanel endQuizDatePanel = GUI_Elements.secondaryPanel(new GridBagLayout());
+    JPanel classSelectionPanel = GUI_Elements.secondaryPanel(new GridBagLayout());
+    JLabel quizTitleLabel = GUI_Elements.label("Quiz Title");
+    JLabel startDateLabel = GUI_Elements.label("Quiz Start Date");
+    JLabel endDateLabel = GUI_Elements.label("Quiz End Date");
+    JTextField quizTitleTextField = GUI_Elements.textField();
     DatePicker startDatePicker = new DatePicker();
     DatePicker endDatePicker = new DatePicker();
     Vector<Class> classes;      // a list of all this instructor's classes
     JList<String> classesList;  // classes list in the form of a string to display in the list.
     JLabel selectionCountLabel = new JLabel("You have not selected any students");
-    QuizSettingsPanel(Window window){
+
+
+    QuizSettingsPanel(Window window) {
+
         super(new GridBagLayout());
         this.setPreferredSize(new Dimension(400, 400));
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets  = new Insets(5, 10, 5, 10);
-        c.anchor = GridBagConstraints.LINE_START;
-        c.gridx = 0; c.gridy = 0;
+        this.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
 
         classes = Database.getInstructorClasses(window.getUser().id);
         Vector<String> classesStrings = HelperFunctions.classesToStringVector(classes);
@@ -1201,13 +1342,77 @@ class QuizSettingsPanel extends JPanel implements ListSelectionListener{
         classesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         classesList.addListSelectionListener(this);
 
-        this.add(quizTitleTextField, c); c.gridy++;
-        this.add(new JLabel("Quiz Start Date"), c); c.gridy++;
-        this.add(startDatePicker,c ); c.gridy++;
-        this.add(new JLabel("Quiz End Date"), c); c.gridy++;
-        this.add(endDatePicker,c ); c.gridy++;
-        this.add(classesList, c); c.gridy++;
-        this.add(selectionCountLabel, c);
+        startDatePicker.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
+        endDatePicker.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
+        quizTitleLabel.setForeground(Color.BLACK);
+        startDateLabel.setForeground(Color.BLACK);
+        endDateLabel.setForeground(Color.BLACK);
+        selectionCountLabel.setForeground(Color.BLACK);
+
+
+
+        // Grid Management -------------------------------------------------------------------
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets  = new Insets(10, 10, 5, 10);
+        c.anchor = GridBagConstraints.LINE_START;
+        c.fill = GridBagConstraints.NONE;
+        c.gridx = 0; c.gridy = 0;
+        c.weightx = 1.0;
+        c.weighty = 1.0;
+
+        GridBagConstraints innerC = new GridBagConstraints();
+        innerC.gridx = 0; innerC.gridy = 0;
+        innerC.weightx = 1.0;
+        innerC.weighty = 1.0;
+        innerC.anchor = GridBagConstraints.LINE_START;
+        innerC.fill = GridBagConstraints.NONE;
+
+        innerC.insets = new Insets(0, 0, 5, 0);
+        quizTitlePanel.add(quizTitleLabel, innerC);
+        innerC.gridy++;
+        innerC.insets = new Insets(0, 0, 0, 0);
+        quizTitlePanel.add(quizTitleTextField, innerC);
+
+        innerC.gridy = 0;
+        startQuizDatePanel.add(startDateLabel, innerC);
+
+        innerC.gridy++;
+        innerC.fill = GridBagConstraints.HORIZONTAL;
+        startQuizDatePanel.add(startDatePicker, innerC);
+
+        innerC.gridy = 0;
+        innerC.fill = GridBagConstraints.NONE;
+        endQuizDatePanel.add(endDateLabel, innerC);
+        innerC.gridy++;
+        innerC.fill = GridBagConstraints.HORIZONTAL;
+        endQuizDatePanel.add(endDatePicker, innerC);
+
+        innerC.fill = GridBagConstraints.NONE;
+        innerC.anchor = GridBagConstraints.CENTER;
+        innerC.gridy = 0;
+        classSelectionPanel.add(selectionCountLabel, innerC);
+        innerC.fill = GridBagConstraints.BOTH;
+        innerC.gridy++;
+        classSelectionPanel.add(classesList, innerC);
+
+
+        c.insets = new Insets(10, 10, 10, 5);
+        this.add(quizTitlePanel, c);
+
+        c.insets  = new Insets(5, 10, 5, 5);
+        c.fill = GridBagConstraints.BOTH;
+        c.gridy++;
+        this.add(startQuizDatePanel, c);
+
+        c.insets  = new Insets(5, 10, 10, 5);
+        c.gridy++;
+        this.add(endQuizDatePanel, c);
+
+        c.gridx = 1;
+        c.gridy = 0;
+        c.gridheight = 4;
+        c.insets = new Insets(10, 5, 10, 40);
+        this.add(classSelectionPanel, c);
     }
     public String getQuizTitle(){return this.quizTitleTextField.getText();}
     public Date getQuizStartDate(){return this.startDatePicker.getDateTime();}
@@ -1261,17 +1466,37 @@ class QuizSelectionScrollPane extends JScrollPane implements MouseListener{
         this.quizzes = quizzes;
         this.window = window;
 
-        JPanel quizzesSelectionPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0; c.gridy = 0;
-        c.insets = new Insets(5, 5, 5, 5);
 
-        for(Quiz quiz : quizzes){
-            QuizPanel quizPanel = new QuizPanel(quiz);
-            quizPanel.addMouseListener(this);
-            quizPanels.add(quizPanel);
-            quizzesSelectionPanel.add(quizPanel, c); c.gridy++;
+        JPanel quizzesSelectionPanel = new JPanel(new GridBagLayout());
+        quizzesSelectionPanel.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 1.0;
+        c.gridx = 0; c.gridy = 0;
+        c.insets = new Insets(5, 5, 10, 5);
+
+
+        if (quizzes.isEmpty()) {
+
+            JLabel emptyLabel = new JLabel("There are no quizzes to display", SwingConstants.CENTER);
+            emptyLabel.setFont(new Font(GUI_Elements.TEXT_FONT, Font.BOLD, 15));
+
+            c.anchor = GridBagConstraints.CENTER;
+            quizzesSelectionPanel.add(emptyLabel, c);
         }
+        else {
+
+            for(Quiz quiz : quizzes){
+
+                QuizPanel quizPanel = new QuizPanel(quiz);
+                quizPanel.setBackground(Color.WHITE);
+                quizPanel.addMouseListener(this);
+                quizPanels.add(quizPanel);
+                quizzesSelectionPanel.add(quizPanel, c);
+                c.gridy++;
+            }
+        }
+
 
         this.setViewportView(quizzesSelectionPanel);
     }
@@ -1304,15 +1529,25 @@ class QuizPanel extends JPanel{
         super(new GridBagLayout());
         this.setPreferredSize(new Dimension(400, 150));
         this.quiz = quiz;
+
+
+        // Grid Management -----------------------------------------------------------------
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(5, 5, 5, 5);
         c.gridx = c.gridy = 0;
-        c.anchor = CENTER;
-        this.add(new JLabel(quiz.title), c);
-        c.anchor = LINE_START; c.gridy++;
-        this.add(new JLabel(String.format("Start Time: %s", quiz.startDateTime.toString())), c);
+        c.anchor = GridBagConstraints.LINE_START;
+        c.weightx = 1.0;
+
+        JLabel titleLabel = new JLabel(quiz.title);
+        titleLabel.setFont(new Font(GUI_Elements.TEXT_FONT, Font.BOLD, 20));
+        this.add(titleLabel, c);
+
         c.gridy++;
-        this.add(new JLabel(String.format("End Time: %s", quiz.endDateTime.toString())), c);
+        this.add(new JLabel(String.format("Date:  %s", quiz.startDateTime.toString().split(" ")[0])), c);
+        c.gridy++;
+        this.add(new JLabel(String.format("Start Time:  %s", quiz.startDateTime.toString().split(" ")[1])), c);
+        c.gridy++;
+        this.add(new JLabel(String.format("End Time:  %s", quiz.endDateTime.toString().split(" ")[1])), c);
     }
 }
 
@@ -1409,16 +1644,16 @@ class QuizDisplayTable extends JPanel implements ActionListener{ // requires stu
         this.student = window.getCurrentStudent();
         this.submissions = submissions;
         Vector<String> headers = new Vector<>(Arrays.asList("ID", "Title", "Start Date", "End Date", "Action"));
+        this.setBackground(GUI_Elements.APP_BACKGROUND);
 
         Table table = new Table(headers);
-        table.setBackground(new Color(238,238,228));
-
         int row = 0;
         int col = 0;
         for(int i = 0; i < quizzes.size(); i++){
             Quiz quiz = quizzes.get(i);
             Submission submission = submissions.get(i);
 
+            table.setBorder(BorderFactory.createLineBorder(GUI_Elements.APP_BACKGROUND));
             table.insert(new JLabel(Integer.toString(quiz.id), SwingConstants.CENTER), row, col++);
             table.insert(new JLabel(quiz.title, SwingConstants.CENTER), row, col++);
             table.insert(new JLabel(quiz.startDateTime.toString(), SwingConstants.CENTER), row, col++);

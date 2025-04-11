@@ -9,6 +9,7 @@ import java.lang.management.OperatingSystemMXBean;
 import java.util.ArrayList;
 import java.awt.image.DataBuffer;
 import javax.swing.*;
+import javax.swing.border.Border;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -100,7 +101,7 @@ public abstract class Page extends JPanel implements ActionListener {
         contentPanel = GUI_Elements.panel(new GridBagLayout());
         contentPanel.setBackground(GUI_Elements.APP_BACKGROUND);
         
-        // Grid manager -----------------------------------------------------------------------------
+        // Grid Management -----------------------------------------------------------------------------
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -108,7 +109,7 @@ public abstract class Page extends JPanel implements ActionListener {
         gbc.weighty = 1.0;
 
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(23, 23, 23, 23);
+        gbc.insets = new Insets(23, 23, 23, 20);
         headerPanel.add(appImageLabel, gbc);
         gbc.gridx++;
 
@@ -761,25 +762,45 @@ class QuizPage extends Page{
     QuizScrollPane quizScrollPane;
     JButton backButton = GUI_Elements.button("Back");
     JButton submitButton = GUI_Elements.button("Submit");
+    JLabel timeLeftLabel = GUI_Elements.label("Time left: 00:00:00");
     QuizPage(Window window){
         super(window);
-        contentPanel.setLayout(new BorderLayout());
+        contentPanel.setLayout(new GridBagLayout());
+
+
         quizScrollPane = new QuizScrollPane(window.quiz.questions);
-        contentPanel.add(quizScrollPane, BorderLayout.CENTER);
-
-        // buttons
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(10, 10, 10, 10);
-        c.gridx = c.gridy = 0;
-        c.gridwidth = 1;
-        JPanel buttonPanel = new JPanel(new GridBagLayout());
-
+                
         backButton.addActionListener(this);
         submitButton.addActionListener(this);
-        buttonPanel.add(backButton, c); c.gridx++;
-        buttonPanel.add(submitButton, c);
+        
+        
+        // Grid Management -----------------------------------------------------------
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = c.gridy = 0;
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.CENTER;
+        c.weightx = 1.0;
 
-        contentPanel.add(buttonPanel, BorderLayout.SOUTH);
+        c.gridwidth = 2;
+        c.insets = new Insets(10, 23, 0, 23);
+        contentPanel.add(timeLeftLabel, c);
+        
+        c.gridy++;
+        c.weighty = 1.0;
+        c.insets = new Insets(5, 23, 10, 23);
+        c.fill = GridBagConstraints.BOTH;
+        contentPanel.add(quizScrollPane, c);
+        
+        c.weighty = 0.0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.insets = new Insets(10, 23, 23, 5);
+        c.gridwidth = 1;
+        c.gridy++;
+        contentPanel.add(backButton, c);
+        c.gridx++;
+        
+        c.insets = new Insets(10, 5, 23, 23);
+        contentPanel.add(submitButton, c);
     }
 
     @Override
@@ -991,9 +1012,7 @@ class ManageClassPage extends Page{
 
 
     @Override
-    public void actionPerformed(ActionEvent e) {
-    }
-
+    public void actionPerformed(ActionEvent e) {}
     public void update(){
         manageStudentsList.update();
         addStudentsList.update();
@@ -1074,50 +1093,68 @@ class StudentClassPage extends Page{
 
 class EditQuizPage extends Page{
     EditQuizScrollPane editQuizScrollPane = new EditQuizScrollPane(QuizGen.questions);
-    JButton backButton = GUI_Elements.button("Back");
+    JButton backButton = GUI_Elements.button("Go back");
     JButton saveButton = GUI_Elements.button("Save Changes");
     QuizSettingsPanel quizSettingsPanel = new QuizSettingsPanel(window);
-    EditQuizPage(Window window){
+
+    
+    EditQuizPage(Window window) {
+        
         super(window);
-        // side panel
-        JPanel sidePanel = new JPanel(new GridBagLayout());
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(5, 5, 10, 10);
-        c.gridx = 0; c.gridy = 0; c.gridwidth = 2;
+        
 
-        // title label
-        sidePanel.add(GUI_Elements.label("Edit Quiz"), c); c.gridy++;
 
-        // settings panel
-        sidePanel.add(quizSettingsPanel, c); c.gridy++;
+        JPanel localPanel = GUI_Elements.panel(new GridBagLayout());
+        JTabbedPane editQuizTabbedPane = new JTabbedPane(JTabbedPane.TOP);
 
-        // buttons
-        c.gridwidth = 1;
-        backButton.addActionListener(this);
+        editQuizTabbedPane.addTab("Quiz Questions", editQuizScrollPane);
+        editQuizTabbedPane.addTab("Schedule Time", quizSettingsPanel);
+
         saveButton.addActionListener(this);
-        sidePanel.add(backButton, c); c.gridx++;
-        sidePanel.add(saveButton, c); c.gridx++;
+        backButton.addActionListener(this);
 
-        c.weighty = 1.0;
-        c.fill = GridBagConstraints.BOTH;
-        sidePanel.add(Box.createVerticalGlue(), c);
 
-        this.add(sidePanel, BorderLayout.EAST);
-        this.add(editQuizScrollPane, BorderLayout.CENTER);
+
+        // Grid Management ----------------------------------------------------------------------
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0; gbc. gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridwidth = 1;
+        
+        localPanel.add(editQuizTabbedPane, gbc);
+        
+        gbc.gridwidth = 2;
+        gbc.insets = new Insets(10, 123, 10, 123);
+        contentPanel.add(localPanel, gbc);
+        
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = 1;
+        gbc.gridy++;
+        gbc.insets = new Insets(10, 123, 23, 5);
+        contentPanel.add(saveButton, gbc);
+        gbc.gridx++;
+        gbc.insets = new Insets(10, 5, 23, 123);
+        contentPanel.add(backButton, gbc);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if(e.getSource() == backButton){
             window.switchPage(new InstructorHomePage(window));
-        } else if(e.getSource() == saveButton){
-            String result = Database.addQuiz(quizSettingsPanel.getQuizTitle(),
-                                                quizSettingsPanel.getQuizStartDate(),
-                                                quizSettingsPanel.getQuizEndDate(),
-                                                quizSettingsPanel.getSelectedClasses(),
-                                                editQuizScrollPane.getQuestions(),
-                                                window.getUser().id,
-                                                QuizGen.documentHash);
+
+        } else if(e.getSource() == saveButton) {
+            String result = Database.addQuiz(
+                quizSettingsPanel.getQuizTitle(),
+                quizSettingsPanel.getQuizStartDate(),
+                quizSettingsPanel.getQuizEndDate(),
+                quizSettingsPanel.getSelectedClasses(),
+                editQuizScrollPane.getQuestions(),
+                window.getUser().id,
+                QuizGen.documentHash
+            );
 
             if(HelperFunctions.showDialogIfError(result, window)) return;
             JOptionPane.showMessageDialog(window,
@@ -1184,25 +1221,6 @@ class ManageStudentPage extends Page{
         super(window);
         Student student = window.getCurrentStudent();
         Class class_ = window.getCurrentClass();
-        this.setLayout(new GridBagLayout());
-        pageTitle.setText(student.firstName + " " + student.lastName);
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(2, 5, 2, 5);
-        c.gridx = 0; c.gridy = 0;
-
-        JPanel studentInfoPanel = new JPanel(new GridBagLayout());
-        c.anchor = GridBagConstraints.LINE_START;
-        studentInfoPanel.add(new JLabel(String.format("Student name: %s %s", student.firstName, student.lastName)), c);
-        c.gridy++;
-        studentInfoPanel.add(new JLabel(String.format("Student ID: %d", student.id)), c); c.gridy++;
-        studentInfoPanel.add(new JLabel(String.format("Student Email: %s", student.email)), c); c.gridy++;
-        studentInfoPanel.add(new JLabel(String.format("Phone Number: %s", student.phoneNumber)), c); c.gridy++;
-        studentInfoPanel.add(new JLabel(String.format("Students Points: %d", student.points)), c);
-        // todo: allow student Object to store last login date.
-
-        c.insets = new Insets(5, 5, 10, 5);
-        c.anchor = GridBagConstraints.CENTER;
-        c.gridx = 0; c.gridy = 0;
 
         // retrieves a vector of quizzes and a vector of the students submissions for a specific student in a specific class.
         // notice that the function returns by reference -not by value- because we need to get 2 values.
@@ -1210,15 +1228,50 @@ class ManageStudentPage extends Page{
         // check the documentation of the 'getQuizzesByClass()' function for more info.
         Database.getQuizzesByClass(class_.id, student.id, quizzes, submissions);
 
+        pageTitle.setText(student.firstName + " " + student.lastName);
+        contentPanel.setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(2, 5, 2, 5);
+        c.gridx = 0; c.gridy = 0;
+
+        JPanel studentInfoPanel = new JPanel(new GridBagLayout());
+        studentInfoPanel.setBackground(GUI_Elements.APP_BACKGROUND);
         c.anchor = GridBagConstraints.LINE_START;
-        this.add(studentInfoPanel, c); c.gridy++;
+        c.fill = GridBagConstraints.NONE;
+        studentInfoPanel.add(GUI_Elements.label(String.format("Student name: %s %s", student.firstName, student.lastName)), c);
+        c.gridy++;
+        studentInfoPanel.add(GUI_Elements.label(String.format("Student ID: %d", student.id)), c);
+        c.gridy++;
+        studentInfoPanel.add(GUI_Elements.label(String.format("Student Email: %s", student.email)), c);
+        c.gridy++;
+        studentInfoPanel.add(GUI_Elements.label(String.format("Phone Number: %s", student.phoneNumber)), c);
+        c.gridy++;
+        studentInfoPanel.add(GUI_Elements.label(String.format("Students Points: %d", student.points)), c);
+        // todo: allow student Object to store last login date.
 
         c.anchor = GridBagConstraints.CENTER;
-        JScrollPane QuizDisplayScrollPane = new JScrollPane(new QuizDisplayTable(window, quizzes, submissions));
-        this.add(QuizDisplayScrollPane, c); c.gridy++;
+        c.gridx = 0; c.gridy = 0;
 
+        c.insets = new Insets(10, 325, 10, 325);
+        c.fill = GridBagConstraints.BOTH;
+        contentPanel.add(studentInfoPanel, c);
+
+        c.insets = new Insets(10, 23, 10, 23);
+        c.gridy++;
+        c.anchor = GridBagConstraints.CENTER;
+
+
+        QuizDisplayTable table = new QuizDisplayTable(window, quizzes, submissions);
+
+        JScrollPane quizDisplayScrollPane = new JScrollPane(table);
+        quizDisplayScrollPane.setBorder(BorderFactory.createLineBorder(GUI_Elements.APP_BACKGROUND));
+        contentPanel.add(quizDisplayScrollPane, c);
+
+        c.insets = new Insets(10, 325, 10, 325);
         backButton.addActionListener(this);
-        this.add(backButton, c);
+        c.gridy++;
+        contentPanel.add(backButton, c);
+        quizDisplayScrollPane.setViewportView(table);
     }
 
     @Override

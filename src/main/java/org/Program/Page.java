@@ -982,6 +982,7 @@ class ManageClassPage extends Page{
         tabbedPane.addTab("                              Manage Class                              ", manageStudentsList);
         tabbedPane.addTab("      Add Students to Class      ", addStudentsList);
         tabbedPane.addTab("     Remove Students from Class     ", removeStudentsList);
+        tabbedPane.addTab("     Quiz Performance     ", new QuizAverageTab(window));
 
         // Set tab background colors
         for (int i = 0; i < tabbedPane.getTabCount(); i++) {
@@ -1309,7 +1310,7 @@ class ViewStudentSubmissionPage extends Page{
         this.add(infoPanel, c); c.gridy++;
 
         c.anchor = GridBagConstraints.CENTER;
-        quizSubmissionDisplay = new QuizSubmissionDisplay(submission.submissionId, true);
+        quizSubmissionDisplay = new QuizSubmissionDisplay(submission.submissionId, window.getUser() instanceof Instructor);
         JScrollPane QuizDisplayScrollPane = new JScrollPane(quizSubmissionDisplay);
         QuizDisplayScrollPane.setPreferredSize(new Dimension(960, 400));
         this.add(QuizDisplayScrollPane, c); c.gridy++;
@@ -1318,7 +1319,10 @@ class ViewStudentSubmissionPage extends Page{
         saveButton.addActionListener(this);
 
         c.gridwidth = 1;
-        this.add(saveButton, c); c.gridx++;
+        if(window.getUser() instanceof Instructor) {
+            this.add(saveButton, c);
+            c.gridx++;
+        }
         this.add(backButton, c);
     }
 
@@ -1713,3 +1717,49 @@ class ComposeNewMessagePage extends Page implements ActionListener{
         }
     }
 }
+
+class ViewQuizStatsPage extends Page{
+    JButton backButton = GUI_Elements.button("Back");
+    ViewQuizStatsPage(Window window){
+        super(window);
+        contentPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.weighty = 6.0;
+        gbc.insets = new Insets(10, 10, 10, 10);
+
+        pageTitle.setText("Individual Quiz Statistics");
+
+        java.util.List<IndividualQuizStatistics> mcqStatistics = Database.getMCQSAnswersPerQuiz(window.quiz.id);
+        DisplayMCQStats mcqTable = new DisplayMCQStats(mcqStatistics);
+
+        java.util.List<IndividualQuizStatistics> essayStatistics = Database.getEssayAnswersPerQuiz(window.quiz.id);
+        DisplayEssayStats essayTable = new DisplayEssayStats(essayStatistics);
+        JPanel localPanel = new JPanel(new GridBagLayout());
+        localPanel.setOpaque(false);
+        localPanel.add(mcqTable, gbc);
+        gbc.gridy++;
+        localPanel.add(essayTable, gbc);
+
+        JScrollPane scrollPane = new JScrollPane(localPanel);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setPreferredSize(new Dimension(600, 500));
+        scrollPane.setOpaque(false);
+        contentPanel.add(scrollPane, gbc); gbc.gridy++;
+        gbc.weighty = 1.0;
+        contentPanel.add(backButton, gbc);
+        backButton.addActionListener(this);
+
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if(e.getSource() == backButton){
+            window.switchPage(new ManageClassPage(window));
+        }
+    }
+}
+

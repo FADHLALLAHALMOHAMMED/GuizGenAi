@@ -5,7 +5,9 @@ import org.Program.Entities.Class;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -94,6 +96,19 @@ public class GUI_Elements {
         JPasswordField passwordField = new JPasswordField();
         passwordField.setPreferredSize(textFieldSize1);
         return passwordField;
+    }
+
+    public static JTextArea textArea(String string){
+        JTextArea textArea = new JTextArea(string);
+
+        textArea.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        textArea.setForeground(new Color(52, 58, 64));
+        textArea.setPreferredSize(new Dimension(300, 60));
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
+        textArea.setEditable(false);
+        textArea.setOpaque(false);
+        return textArea;
     }
 
     public static JButton button(String text){
@@ -1642,9 +1657,8 @@ class QuizDisplayTable extends JPanel implements ActionListener{ // requires stu
         this.quizzes = quizzes;
         this.student = window.getCurrentStudent();
         this.submissions = submissions;
-//        this.setPreferredSize(new Dimension(600, 400));
         Vector<String> headers = new Vector<>(Arrays.asList("ID", "Title", "Start Date", "End Date", "Action"));
-        this.setBackground(GUI_Elements.APP_BACKGROUND);
+        this.setBackground(Color.WHITE);
 
         Table table = new Table(headers);
         int row = 0;
@@ -1792,6 +1806,7 @@ class QuizSubmissionDisplay extends JPanel{
 
     public Vector<EssayQuestion> getEditedQuestions(){
         for(int i = 0; i < essayQuestions.size(); i++){
+
             essayQuestions.get(i).gradeJustification = justifications.get(i).getText();
             essayQuestions.get(i).grade = grades[essayGrades.get(i).getSelectedIndex()];
         }
@@ -1890,47 +1905,110 @@ class InstructorViewStudentSubmissionsTab extends JPanel{
         quizzesScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         quizzesScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         quizzesScrollPane.setPreferredSize(new Dimension(800, 450));
+        quizzesScrollPane.setOpaque(true);
         quizzesScrollPane.setBackground(Color.WHITE);
         this.add(quizzesScrollPane, c);
 //        this.add(new JScrollPane(table), c);
     }
 }
 
-class StudentInfoTab extends JPanel{
-    StudentInfoTab(Window window){
+//class StudentInfoTab extends JPanel{
+//    StudentInfoTab(Window window){
+//        Student student = window.getCurrentStudent();
+//
+//        this.setLayout(new GridBagLayout());
+//        this.setPreferredSize(new Dimension(700, 500));
+//        GridBagConstraints c = new GridBagConstraints();
+//        c.insets = new Insets(2, 5, 2, 5);
+//        c.gridx = 0; c.gridy = 0;
+//
+//        JPanel studentInfoPanel = new JPanel(new GridBagLayout());
+//        studentInfoPanel.setPreferredSize(new Dimension(700, 500));
+//        studentInfoPanel.setOpaque(false);
+//        this.setOpaque(false);
+//        c.anchor = GridBagConstraints.LINE_START;
+//        c.fill = GridBagConstraints.NONE;
+//        studentInfoPanel.add(GUI_Elements.label(String.format("Student name: %s %s", student.firstName, student.lastName)), c);
+//        c.gridy++;
+//        studentInfoPanel.add(GUI_Elements.label(String.format("Student ID: %d", student.id)), c);
+//        c.gridy++;
+//        studentInfoPanel.add(GUI_Elements.label(String.format("Student Email: %s", student.email)), c);
+//        c.gridy++;
+//        studentInfoPanel.add(GUI_Elements.label(String.format("Phone Number: %s", student.phoneNumber)), c);
+//        c.gridy++;
+//        studentInfoPanel.add(GUI_Elements.label(String.format("Students Points: %d", student.points)), c);
+//        c.gridy++;
+//        studentInfoPanel.add(GUI_Elements.label(String.format("Last Login Time: %s", student.lastLogin)), c);
+//        c.anchor = GridBagConstraints.CENTER;
+//        c.gridx = 0; c.gridy = 0;
+//
+//        c.insets = new Insets(10, 325, 10, 325);
+//        c.fill = GridBagConstraints.BOTH;
+//        this.add(studentInfoPanel, c);
+//    }
+//
+//}
+
+class StudentInfoTab extends JPanel {
+    StudentInfoTab(Window window) {
         Student student = window.getCurrentStudent();
 
         this.setLayout(new GridBagLayout());
-        this.setPreferredSize(new Dimension(700, 500));
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(2, 5, 2, 5);
-        c.gridx = 0; c.gridy = 0;
-
-        JPanel studentInfoPanel = new JPanel(new GridBagLayout());
-        studentInfoPanel.setPreferredSize(new Dimension(700, 500));
-        studentInfoPanel.setOpaque(false);
         this.setOpaque(false);
-        c.anchor = GridBagConstraints.LINE_START;
-        c.fill = GridBagConstraints.NONE;
-        studentInfoPanel.add(GUI_Elements.label(String.format("Student name: %s %s", student.firstName, student.lastName)), c);
-        c.gridy++;
-        studentInfoPanel.add(GUI_Elements.label(String.format("Student ID: %d", student.id)), c);
-        c.gridy++;
-        studentInfoPanel.add(GUI_Elements.label(String.format("Student Email: %s", student.email)), c);
-        c.gridy++;
-        studentInfoPanel.add(GUI_Elements.label(String.format("Phone Number: %s", student.phoneNumber)), c);
-        c.gridy++;
-        studentInfoPanel.add(GUI_Elements.label(String.format("Students Points: %d", student.points)), c);
-        c.gridy++;
-        studentInfoPanel.add(GUI_Elements.label(String.format("Last Login Time: %s", student.lastLogin)), c);
-        c.anchor = GridBagConstraints.CENTER;
-        c.gridx = 0; c.gridy = 0;
+        this.setPreferredSize(new Dimension(700, 500));
 
-        c.insets = new Insets(10, 325, 10, 325);
-        c.fill = GridBagConstraints.BOTH;
-        this.add(studentInfoPanel, c);
+        // Outer container with padding and border
+        JPanel cardPanel = new JPanel(new GridBagLayout());
+        cardPanel.setBackground(Color.WHITE);
+        cardPanel.setBorder(new CompoundBorder(
+                new LineBorder(new Color(200, 200, 200), 1, true),
+                new EmptyBorder(20, 30, 20, 30)
+        ));
+
+        // Setup constraints for label grid
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(10, 10, 10, 10);
+        c.anchor = GridBagConstraints.LINE_START;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 0;
+        c.gridy = 0;
+
+        // Styling helper
+        Font labelFont = new Font("SansSerif", Font.BOLD, 14);
+        Font valueFont = new Font("SansSerif", Font.PLAIN, 14);
+
+        // Helper to add rows
+        addInfoRow(cardPanel, "Student Name:", student.firstName + " " + student.lastName, c, labelFont, valueFont);
+        addInfoRow(cardPanel, "Student ID:", String.valueOf(student.id), c, labelFont, valueFont);
+        addInfoRow(cardPanel, "Email:", student.email, c, labelFont, valueFont);
+        addInfoRow(cardPanel, "Phone Number:", student.phoneNumber, c, labelFont, valueFont);
+        addInfoRow(cardPanel, "Points:", String.valueOf(student.points), c, labelFont, valueFont);
+        addInfoRow(cardPanel, "Last Login:", student.lastLogin.toString(), c, labelFont, valueFont);
+
+        // Center the card panel in this tab
+        GridBagConstraints outer = new GridBagConstraints();
+        outer.gridx = 0;
+        outer.gridy = 0;
+        outer.weightx = 1.0;
+        outer.weighty = 1.0;
+        outer.anchor = GridBagConstraints.CENTER;
+        outer.fill = GridBagConstraints.NONE;
+
+        this.add(cardPanel, outer);
     }
 
+    private void addInfoRow(JPanel panel, String labelText, String valueText, GridBagConstraints c, Font labelFont, Font valueFont) {
+        JLabel label = new JLabel(labelText);
+        label.setFont(labelFont);
+        JLabel value = new JLabel(valueText);
+        value.setFont(valueFont);
+
+        c.gridx = 0;
+        panel.add(label, c);
+        c.gridx = 1;
+        panel.add(value, c);
+        c.gridy++;
+    }
 }
 
 class StudentViewClassTrophies extends JPanel implements ActionListener{
@@ -2069,5 +2147,84 @@ class InstructorFeedbackTab extends JPanel implements ActionListener{
     }
 }
 
+class DisplayMCQStats extends JPanel{
+    DisplayMCQStats(List<IndividualQuizStatistics> statistics){
+        Vector<String> headers = new Vector<>(Arrays.asList("Question Text", "Question Type", "Correct Percentage"));
+        Table table = new Table(headers);
+        table.setBackground(new Color(238, 238, 228));
+        int row = 0;
+        int col = 0;
+        for (IndividualQuizStatistics statistic : statistics) {
+            table.insert(GUI_Elements.textArea(statistic.getQuestionText()), row, col++);
+            table.insert(new JLabel(statistic.getQuestionType()), row, col++);
+            table.insert(new JLabel(statistic.getPercentageOfCorrectChoice() + "% "), row, col);
+            row++;
+            col = 0;
+        }
+        this.add(table);
+    }
+}
 
+class DisplayEssayStats extends JPanel{
+    DisplayEssayStats(List<IndividualQuizStatistics> statistics){
+        Vector<String> headers = new Vector<>(Arrays.asList("Question Text", "Full Credit", "Partial Credit", "No Credit"));
+        Table table = new Table(headers);
+        table.setBackground(new Color(238, 238, 228));
+        int row = 0;
+        int col = 0;
+        for (IndividualQuizStatistics statistic : statistics) {
+            table.insert(GUI_Elements.textArea(statistic.getQuestionText()), row, col++);
+            table.insert(new JLabel(statistic.getPercentageOfFullCredit() + "% "), row, col++);
+            table.insert(new JLabel(statistic.getPercentageOfPartialCredit() + "% "), row, col++);
+            table.insert(new JLabel(statistic.getPercentageOfNoCredit() + "% "), row, col);
+            row++;
+            col = 0;
+        }
+        this.add(table);
+    }
+}
 
+class QuizAverageTab extends JPanel implements ActionListener{
+    Window window;
+    Vector<Quiz> quizzes = new Vector<>();
+    Vector<JButton> detailButtons = new Vector<>();
+
+    public QuizAverageTab(Window window) {
+        this.window = window;
+        setLayout(new BorderLayout());
+        Vector<String> columns = new Vector<>(Arrays.asList("QuizID", "Quiz Title", "Taken By", "Average", "Max", "Min", "Details"));
+        this.setBackground(GUI_Elements.APP_BACKGROUND);
+
+        Table tab = new Table(columns);
+        tab.setBorder(BorderFactory.createLineBorder(GUI_Elements.APP_BACKGROUND));
+        List<Quiz> statistics = Database.getOverallQuizStatistics(window.getCurrentClass().id);
+        int row = 0;
+        int col = 0;
+        for (Quiz quiz : statistics) {
+            tab.insert(new JLabel((quiz.id) + "", SwingConstants.CENTER), row, col++);
+            tab.insert(new JLabel(quiz.title, SwingConstants.CENTER), row, col++);
+            tab.insert(new JLabel(Integer.toString(quiz.count), SwingConstants.CENTER), row, col++);
+            tab.insert(new JLabel(Double.toString(quiz.average), SwingConstants.CENTER), row, col++);
+            tab.insert(new JLabel(Integer.toString(quiz.max), SwingConstants.CENTER), row, col++);
+            tab.insert(new JLabel(Integer.toString(quiz.min), SwingConstants.CENTER), row, col++);
+            JButton button = GUI_Elements.button("See more");
+            button.addActionListener(this);
+            detailButtons.add(button);
+            quizzes.add(quiz);
+            tab.insert(button, row, col);
+            col = 0;
+            row++;
+        }
+        this.add(new JScrollPane(tab));
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        for(int i = 0; i < detailButtons.size(); i++){
+            if(e.getSource() == detailButtons.get(i)){
+                window.quiz = quizzes.get(i);
+                window.switchPage(new ViewQuizStatsPage(window));
+            }
+        }
+    }
+}

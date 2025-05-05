@@ -1,13 +1,15 @@
 package org.Program.Entities;
 
+import java.util.Date;
+
 public class Feedback {
     private int instructorId;
     private int studentId;
     private String subjectLine;
     private String messageText;
-    private String dateTimeSent;
+    private Date dateTimeSent;
 
-    public Feedback(int instructorId, int studentId, String subjectLine, String messageText, String dateTimeSent) {
+    public Feedback(int instructorId, int studentId, String subjectLine, String messageText, Date dateTimeSent) {
         this.instructorId = instructorId;
         this.studentId = studentId;
         this.subjectLine = subjectLine;
@@ -18,5 +20,5 @@ public class Feedback {
     public int getStudentId() { return studentId; }
     public String getSubjectLine() { return subjectLine; }
     public String getMessageText() { return messageText; }
-    public String getDateTimeSent() { return dateTimeSent;}
+    public Date getDateTimeSent() { return dateTimeSent;}
 }

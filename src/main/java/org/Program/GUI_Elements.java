@@ -10,6 +10,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
@@ -1135,7 +1136,7 @@ class AddStudentListPanel extends JPanel implements ActionListener, ListSelectio
                 Database.addStudentsToClass(selectedStudents, window.getCurrentClass().id);
                 window.getPage().update();
             } else {
-                System.out.println("You have no selected any students to add to the class.");
+                HelperFunctions.showDialogIfError("You have not selected any students to add to the class", window);
             }
 
         } else if(e.getSource() == cancelButton){
@@ -1273,7 +1274,7 @@ class RemoveStudentListPanel extends JPanel implements ActionListener, ListSelec
                 Database.removeStudentsFromClass(selectedStudents, window.getCurrentClass().id);
                 window.getPage().update();
             } else {
-                System.out.println("You have no selected any students to add to the class.");
+                HelperFunctions.showDialogIfError("You have not selected any students to remove from the class", window);
             }
 
         } else if(e.getSource() == cancelButton){
@@ -1641,6 +1642,7 @@ class QuizDisplayTable extends JPanel implements ActionListener{ // requires stu
         this.quizzes = quizzes;
         this.student = window.getCurrentStudent();
         this.submissions = submissions;
+//        this.setPreferredSize(new Dimension(600, 400));
         Vector<String> headers = new Vector<>(Arrays.asList("ID", "Title", "Start Date", "End Date", "Action"));
         this.setBackground(GUI_Elements.APP_BACKGROUND);
 
@@ -1800,26 +1802,32 @@ class QuizSubmissionDisplay extends JPanel{
 class TrophyViewTable extends JPanel {
     TrophyViewTable(List<Trophy> trophies) {
         Vector<String> headers = new Vector<>(Arrays.asList("Trophy", "Class", "Achievement"));
-        System.out.println(trophies.size());
         Table table = new Table(headers);
         table.setBackground(new Color(238, 238, 228));
         int row = 0;
         int col = 0;
         for (Trophy trophy : trophies) {
             table.insert(new JLabel(trophy.getTrophyIcon()), row, col++);
-            table.insert(GUI_Elements.label(trophy.getDescription()), row, col);
+            table.insert(new JLabel("ID: " + trophy.getClassId()), row, col++);
+            table.insert(textArea(trophy.getDescription()), row, col);
             row++;
             col = 0;
         }
         this.add(table);
     }
-}
-
-class StudentViewClassTrophies extends JPanel{
-    StudentViewClassTrophies(Window window){
-        List<Trophy> trophies = Database.getTrophiesForStudentInClass(window.getUser().id, window.getCurrentClass().id);
-        TrophyViewTable trophyTable = new TrophyViewTable(trophies);
-        this.add(new JScrollPane(trophyTable));
+    public JScrollPane textArea(String text){
+        JTextArea textArea = new JTextArea(text);
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
+        textArea.setOpaque(false);
+        textArea.setEditable(false);
+        JScrollPane textAreaScroll = new JScrollPane(textArea);
+        textAreaScroll.setPreferredSize(new Dimension(400, 60));
+        textAreaScroll.setOpaque(false);
+        textAreaScroll.getViewport().setOpaque(false);
+        textAreaScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        textAreaScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        return textAreaScroll;
     }
 }
 
@@ -1831,8 +1839,8 @@ class InstructorViewStudentClassTrophies extends JPanel implements ActionListene
         this.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0; gbc. gridy = 0;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
+        gbc.weightx = 5.0;
+        gbc.weighty = 5.0;
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.gridwidth = 1;
@@ -1842,6 +1850,8 @@ class InstructorViewStudentClassTrophies extends JPanel implements ActionListene
         this.add(new JScrollPane(trophyTable), gbc);
         gbc.gridy++;
         newTrophyButton.addActionListener(this);
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.NONE;
         this.add(newTrophyButton, gbc);
     }
@@ -1868,20 +1878,21 @@ class InstructorViewStudentSubmissionsTab extends JPanel{
         Database.getQuizzesByClass(class_.id, student.id, quizzes, submissions);
 
         this.setLayout(new GridBagLayout());
+        this.setBackground(Color.WHITE);
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = 0; c.gridy = 0;
         c.fill = GridBagConstraints.BOTH;
-
-        c.insets = new Insets(10, 23, 10, 23);
-        c.gridy++;
         c.anchor = GridBagConstraints.CENTER;
 
-
         QuizDisplayTable table = new QuizDisplayTable(window, quizzes, submissions);
-        JScrollPane quizDisplayScrollPane = new JScrollPane(table);
-        quizDisplayScrollPane.setBorder(BorderFactory.createLineBorder(GUI_Elements.APP_BACKGROUND));
-        this.add(quizDisplayScrollPane, c);
-        quizDisplayScrollPane.setViewportView(table);
+
+        JScrollPane quizzesScrollPane = new JScrollPane(table);
+        quizzesScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        quizzesScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        quizzesScrollPane.setPreferredSize(new Dimension(800, 450));
+        quizzesScrollPane.setBackground(Color.WHITE);
+        this.add(quizzesScrollPane, c);
+//        this.add(new JScrollPane(table), c);
     }
 }
 
@@ -1890,12 +1901,15 @@ class StudentInfoTab extends JPanel{
         Student student = window.getCurrentStudent();
 
         this.setLayout(new GridBagLayout());
+        this.setPreferredSize(new Dimension(700, 500));
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(2, 5, 2, 5);
         c.gridx = 0; c.gridy = 0;
 
         JPanel studentInfoPanel = new JPanel(new GridBagLayout());
-        studentInfoPanel.setBackground(GUI_Elements.APP_BACKGROUND);
+        studentInfoPanel.setPreferredSize(new Dimension(700, 500));
+        studentInfoPanel.setOpaque(false);
+        this.setOpaque(false);
         c.anchor = GridBagConstraints.LINE_START;
         c.fill = GridBagConstraints.NONE;
         studentInfoPanel.add(GUI_Elements.label(String.format("Student name: %s %s", student.firstName, student.lastName)), c);
@@ -1917,6 +1931,142 @@ class StudentInfoTab extends JPanel{
         this.add(studentInfoPanel, c);
     }
 
+}
+
+class StudentViewClassTrophies extends JPanel implements ActionListener{
+    Window window;
+    StudentViewClassTrophies(Window window){
+        this.window = window;
+        this.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0; gbc. gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridwidth = 1;
+
+        List<Trophy> trophies = Database.getTrophiesForStudentInClass(window.getUser().id, window.getCurrentClass().id);
+        TrophyViewTable trophyTable = new TrophyViewTable(trophies);
+        this.add(new JScrollPane(trophyTable), gbc);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        window.switchPage(new AwardTrophyPage(window));
+    }
+}
+
+class FeedbackMessage extends JPanel{
+    FeedbackMessage(Feedback feedback){
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy - HH:mm");
+
+        // Set layout and styling
+        setLayout(new BorderLayout(10, 10));
+        setBackground(Color.WHITE);
+        setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                new EmptyBorder(15, 15, 15, 15)
+        ));
+
+        // Subject label
+        JLabel subjectLabel = new JLabel(feedback.getSubjectLine());
+        subjectLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
+        subjectLabel.setForeground(new Color(33, 37, 41));
+
+        // Message area
+        JTextArea messageArea = new JTextArea(feedback.getMessageText());
+        messageArea.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        messageArea.setForeground(new Color(52, 58, 64));
+        messageArea.setLineWrap(true);
+        messageArea.setWrapStyleWord(true);
+        messageArea.setEditable(false);
+        messageArea.setOpaque(false);
+
+        // Date label
+        JLabel dateLabel = new JLabel(dateFormat.format(feedback.getDateTimeSent()));
+        dateLabel.setFont(new Font("SansSerif", Font.ITALIC, 12));
+        dateLabel.setForeground(new Color(108, 117, 125));
+
+        // Add components to panel
+        add(subjectLabel, BorderLayout.NORTH);
+        add(messageArea, BorderLayout.CENTER);
+        add(dateLabel, BorderLayout.SOUTH);
+    }
+}
+
+class FeedbackScrollPane extends JScrollPane{
+    FeedbackScrollPane(List<Feedback> feedbackList){
+        this.setPreferredSize(new Dimension(700, 500));
+        this.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        this.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+
+        JPanel feedbackPanel = new JPanel(new GridBagLayout());
+        feedbackPanel.setBackground(GUI_Elements.SECONDARY_BACKGROUND);
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 1.0;
+        c.gridx = 0; c.gridy = 0;
+        c.insets = new Insets(5, 5, 10, 5);
+        for(Feedback feedback: feedbackList){
+            feedbackPanel.add(new FeedbackMessage(feedback), c); c.gridy++;
+        }
+        this.setViewportView(feedbackPanel);
+    }
+}
+
+class StudentClassFeedbackTab extends JPanel{
+    Window window;
+    StudentClassFeedbackTab(Window window){
+        this.window = window;
+        this.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0; gbc. gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridwidth = 1;
+
+        List<Feedback> feedbackList = Database.getFeedbackForStudentInClass(window.getUser().id, window.getCurrentClass().instructorId);
+        FeedbackScrollPane feedbackScrollPane = new FeedbackScrollPane(feedbackList);
+        this.add(feedbackScrollPane, gbc);
+    }
+}
+
+class InstructorFeedbackTab extends JPanel implements ActionListener{
+    Window window;
+    JButton composeNewMessageButton = GUI_Elements.button("Compose New Message");
+    InstructorFeedbackTab(Window window){
+        this.window = window;
+        this.setLayout(new GridBagLayout());
+        this.setPreferredSize(new Dimension(700, 600));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0; gbc. gridy = 0;
+        gbc.weightx = 5.0;
+        gbc.weighty = 5.0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridwidth = 1;
+
+        List<Feedback> feedbackList = Database.getFeedbackForStudentInClass(window.getCurrentStudent().id, window.getCurrentClass().instructorId);
+        FeedbackScrollPane feedbackScrollPane = new FeedbackScrollPane(feedbackList);
+        this.add(feedbackScrollPane, gbc);
+        gbc.gridy++;
+        composeNewMessageButton.addActionListener(this);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.insets = new Insets(5, 10, 5, 10);
+        this.add(composeNewMessageButton, gbc);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if(e.getSource() == composeNewMessageButton){
+            window.switchPage(new ComposeNewMessagePage(window));
+        }
+    }
 }
 
 

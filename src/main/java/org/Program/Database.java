@@ -164,7 +164,8 @@ public class Database {
         return new Class(
                 resultSet.getInt(1),
                 resultSet.getString(2),
-                resultSet.getString(3)
+                resultSet.getString(3),
+                resultSet.getInt(4)
         );
     }
 
@@ -242,7 +243,7 @@ public class Database {
     public static Vector<Class> getInstructorClasses(int instructorId){
         Vector<Class> classes = new Vector<>();
         String getClassesDML = """
-                select ClassId, ClassName, classIconPath
+                select ClassId, ClassName, classIconPath, Instructor
                 from classes
                 where instructor = ?;
                 """;
@@ -267,7 +268,7 @@ public class Database {
     public static Vector<Class> getStudentClasses(int StudentId){
         Vector<Class> classes = new Vector<>();
         String getClassesDML = """
-                select c.classId, c.classname, c.classIconPath
+                select c.classId, c.classname, c.classIconPath, c.Instructor
                 from classes c right join students_classes sc
                 on c.ClassID = sc.Class
                 where sc.student = ?;
@@ -1346,7 +1347,37 @@ public class Database {
                         rs.getInt("Student"),
                         rs.getString("SubjectLine"),
                         rs.getString("MessageText"),
-                        rs.getString("DateTimeSent")
+                        rs.getTimestamp("DateTimeSent")
+                );
+                feedbackList.add(feedback);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return feedbackList;
+    }
+
+    public static List<Feedback> getFeedbackForStudentInClass(int studentId, int instructorId) {
+        List<Feedback> feedbackList = new ArrayList<>();
+        String query = """
+                SELECT * FROM Feedback
+                WHERE Student = ? and instructor = ?
+                ORDER BY DateTimeSent DESC
+                """;
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, studentId);
+            stmt.setInt(2, instructorId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                Feedback feedback = new Feedback(
+                        rs.getInt("Instructor"),
+                        rs.getInt("Student"),
+                        rs.getString("SubjectLine"),
+                        rs.getString("MessageText"),
+                        rs.getTimestamp("DateTimeSent")
                 );
                 feedbackList.add(feedback);
             }

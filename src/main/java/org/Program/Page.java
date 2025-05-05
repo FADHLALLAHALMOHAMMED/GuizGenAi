@@ -5,21 +5,12 @@ import org.Program.Entities.Class;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.lang.management.OperatingSystemMXBean;
-import java.util.ArrayList;
-import java.awt.image.DataBuffer;
 import javax.swing.*;
-import javax.swing.border.Border;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Date;
 import java.util.Vector;
 
@@ -1030,13 +1021,14 @@ class StudentClassPage extends Page{
         JPanel localPanel = GUI_Elements.panel(new GridBagLayout());
 
         JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+        tabbedPane.setPreferredSize(new Dimension(1000, 550));
 
         // for the pass submissions tab
         Vector<Quiz> quizzes = new Vector<>();
         Vector<Submission> submissions = new Vector<>();
         Database.getAllStudentSubmissionsInClass(window.getUser().id, window.getCurrentClass().id, quizzes, submissions);
         JScrollPane QuizDisplayScrollPane = new JScrollPane(new QuizDisplayTable(window, quizzes, submissions));
-
+        QuizDisplayScrollPane.setBackground(Color.WHITE);
         // for the Class information tab
         JPanel classInformationPanel = new JPanel(new GridBagLayout());
         classInformationPanel.setOpaque(false);
@@ -1049,7 +1041,7 @@ class StudentClassPage extends Page{
         classInformationPanel.add(new JLabel(class_.classIcon), c);  c.gridy++;
         classInformationPanel.add(GUI_Elements.label("Class Title:   " + class_.name), c); c.gridy++;
         classInformationPanel.add(GUI_Elements.label("Class Id:   " + class_.id), c); c.gridy++;
-        classInformationPanel.add(GUI_Elements.label("Class Instructor:   "), c); c.gridy++; // todo: create a query that returns Instructors full and and count of students
+        classInformationPanel.add(GUI_Elements.label("Class Instructor:   "), c); c.gridy++; // todo: create a query that returns Instructors full  and count of students
         classInformationPanel.add(GUI_Elements.label("Number of students:   "), c); // todo: think of more relevant information to add here.
 
         // view ongoing Quizzes panel
@@ -1057,8 +1049,8 @@ class StudentClassPage extends Page{
         QuizSelectionScrollPane QuizList = new QuizSelectionScrollPane(window, ongoingQuizzes);
 
         tabbedPane.addTab("        Class Information        ", classInformationPanel);
-        tabbedPane.addTab("      View Trophies in Class     ", GUI_Elements.label("Class Trophies"));
-        tabbedPane.addTab("      View Feedback in Class     ", GUI_Elements.label("Class Feedback"));
+        tabbedPane.addTab("      View Trophies in Class     ", new StudentViewClassTrophies(window));
+        tabbedPane.addTab("      View Feedback in Class     ", new StudentClassFeedbackTab(window));
         tabbedPane.addTab("       View Ongoing Quizzes      ", QuizList);
         tabbedPane.addTab("      View Past Submissions      ", QuizDisplayScrollPane);
 
@@ -1168,7 +1160,6 @@ class EditQuizPage extends Page{
 }
 
 class StudentViewQuizzesPage extends Page{
-
     StudentViewQuizzesPage(Window window){
         super(window);
         this.setLayout(new BorderLayout());
@@ -1220,27 +1211,57 @@ class ManageStudentPage extends Page{
         Student student = window.getCurrentStudent();
         pageTitle.setText(student.firstName + " " + student.lastName);
         contentPanel.setLayout(new GridBagLayout());
+
+        JPanel localPanel = new JPanel(new GridBagLayout());
+        localPanel.setOpaque(false);
+
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = 0; c.gridy = 0;
 
         JTabbedPane tabs = new JTabbedPane();
+        tabs.setPreferredSize(new Dimension(800, 600));
+
         JPanel studentInfoTab = new StudentInfoTab(window);
         JPanel submissionsTab = new InstructorViewStudentSubmissionsTab(window);
+        JPanel feedbackTab = new InstructorFeedbackTab(window);
         JPanel trophiesTab = new InstructorViewStudentClassTrophies(window);
 
         tabs.addTab("Student Information", studentInfoTab);
         tabs.addTab("Student Submissions", submissionsTab);
+        tabs.addTab("Student feedback", feedbackTab);
         tabs.addTab("Student Trophies", trophiesTab);
 
-        contentPanel.add(tabs, c);
-        contentPanel.add(tabs, c);
-        c.gridy++;
-        c.anchor = GridBagConstraints.CENTER;
+        for (int i = 0; i < tabs.getTabCount(); i++) {
+            tabs.setBackgroundAt(i, GUI_Elements.SECONDARY_BACKGROUND);
+        }
 
-        c.insets = new Insets(10, 325, 10, 325);
-        backButton.addActionListener(this);
+//        contentPanel.add(tabs, c);
+//        c.gridy++;
+//        c.anchor = GridBagConstraints.CENTER;
+//
+//        c.insets = new Insets(10, 325, 10, 325);
+//        backButton.addActionListener(this);
+//        c.gridy++;
+//        contentPanel.add(backButton, c);
+
+        // Grid Management ---------------------------------------------------------------------------
+        c.gridx = 0; c.gridy = 0;
+        c.weightx = 6.0;
+        c.weighty = 6.0;
+        c.fill = GridBagConstraints.BOTH;
+        c.anchor = GridBagConstraints.CENTER;
+        c.insets = new Insets(10, 60, 10, 60);
+
+        localPanel.add(tabs, c);
+        contentPanel.add(localPanel, c);
+
+        c.fill = GridBagConstraints.NONE;
         c.gridy++;
+        c.insets = new Insets(10, 20, 20, 20);
+        c.weightx = 1.0;
+        c.weighty = 1.0;
         contentPanel.add(backButton, c);
+        backButton.addActionListener(this);
     }
 
     @Override
@@ -1312,7 +1333,6 @@ class ViewStudentSubmissionPage extends Page{
                 window.switchPage(new StudentClassPage(window));
         }else if(e.getSource() == saveButton) {
             if(HelperFunctions.confirmUserAction("Are you sure you want to save changes?", window)) return;
-            System.out.println(quizSubmissionDisplay.getEditedQuestions());
             Database.UpdateEssayGrades(quizSubmissionDisplay.getEditedQuestions(), submission.submissionId);
             JOptionPane.showMessageDialog(window,
                     "Essay Questions updated successfully",
@@ -1582,6 +1602,108 @@ class AwardTrophyPage extends Page {
             JOptionPane.showMessageDialog(
                     window,
                     "Trophy awarded successfully.",
+                    "Successful Operation",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+            window.switchPage(new ManageStudentPage(window));
+        } else if(e.getSource() == cancelButton){
+            window.switchPage(new ManageStudentPage(window));
+        }
+    }
+}
+
+class ComposeNewMessagePage extends Page implements ActionListener{
+    JTextField subjectField = GUI_Elements.textField();
+    JTextArea messageArea = new JTextArea();
+    JButton cancelButton = GUI_Elements.button("Cancel");
+    JButton sendButton = GUI_Elements.button("Send Feedback");
+    JPanel localPanel = GUI_Elements.panel(new GridBagLayout());
+    ComposeNewMessagePage(Window window){
+        super(window);
+        contentPanel.setLayout(new GridBagLayout());
+        pageTitle.setText("Compose Feedback Message");
+
+        cancelButton.setBackground(GUI_Elements.WARNING_BACKGROUND);
+        cancelButton.setBorder(GUI_Elements.BLACK_BORDER);
+
+        sendButton.setPreferredSize(new Dimension(GUI_Elements.textFieldSize1.width, GUI_Elements.BUTTON_SIZE.height));
+        cancelButton.setPreferredSize(new Dimension(GUI_Elements.textFieldSize1.width, GUI_Elements.BUTTON_SIZE.height));
+
+        sendButton.addActionListener(this);
+        cancelButton.addActionListener(this);
+
+        JLabel subjectLineLabel = GUI_Elements.label("Subject Line:");
+        JLabel messageTextLabel = GUI_Elements.label("Message Text:");
+
+        messageArea.setLineWrap(true);
+        messageArea.setWrapStyleWord(true);
+        JScrollPane textAreaScroll = new JScrollPane(messageArea);
+        textAreaScroll.setPreferredSize(new Dimension(GUI_Elements.textFieldSize1.width, 200));
+        textAreaScroll.setOpaque(false);
+        textAreaScroll.getViewport().setOpaque(false);
+        textAreaScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        textAreaScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        // Grid Managemenet -----------------------------------------------------------------------------------------
+
+        GridBagConstraints contentPanelGBC = new GridBagConstraints();
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.gridx = 0; gbc.gridy = 0;
+
+
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.anchor = GridBagConstraints.WEST;
+        localPanel.add(subjectLineLabel, gbc);
+
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridy++;
+        localPanel.add(subjectField, gbc);
+
+
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridy++;
+        localPanel.add(messageTextLabel, gbc);
+
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridy++;
+        localPanel.add(textAreaScroll, gbc);
+
+
+        gbc.gridx++;
+        localPanel.add(sendButton, gbc);
+
+
+        gbc.insets = new Insets(20, 10, 10, 10);
+        gbc.gridx = 0; gbc.gridy++;
+        gbc.gridwidth = 2;
+        localPanel.add(sendButton, gbc);
+
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.gridy++;
+        localPanel.add(cancelButton, gbc);
+
+
+        contentPanelGBC.gridx = 0; contentPanelGBC.gridy = 0;
+        contentPanelGBC.fill = GridBagConstraints.BOTH;
+        contentPanelGBC.anchor = GridBagConstraints.CENTER;
+        contentPanel.add(localPanel, contentPanelGBC);
+
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if(e.getSource() == sendButton){
+            if(subjectField.getText().equals("") || messageArea.getText().equals("")){
+                HelperFunctions.showDialogIfError("Subject Line and Message Text must not be empty", window);
+                return;
+            }
+            Database.sendFeedback(window.getUser().id, window.getCurrentStudent().id, subjectField.getText(), messageArea.getText());
+            JOptionPane.showMessageDialog(
+                    window,
+                    "Feedback message successfully sent.",
                     "Successful Operation",
                     JOptionPane.INFORMATION_MESSAGE
             );

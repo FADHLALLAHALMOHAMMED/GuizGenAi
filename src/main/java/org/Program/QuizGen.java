@@ -109,11 +109,15 @@ public class QuizGen implements Runnable{
             } catch (Exception e) {
                 if (e.getMessage().matches("503")) {
                     // control will reach here if the embedding API fails.
+                    System.out.println(e.getMessage());
+                    e.printStackTrace();
                     System.out.printf("Embedding service unavailable: retrying(%d/3) \n", retries+1);
                     // if the API fails the loop will try 2 more times, then give up and show an error message.
                 } else {
                     // control will reach here in case of unexpected error or user pressing cancel in waiting Page.
-                    System.out.println("Thread1 Successfully interrupted: " + e);
+                    System.out.println("Thread1 Successfully interrupted: ");
+                    System.out.println(e.getMessage());
+                    e.printStackTrace();
                     window.switchPage(new InstructorHomePage(window));
                     filePath = null;
                     return;
@@ -179,6 +183,8 @@ public class QuizGen implements Runnable{
                     .build();
 
         }catch(Exception e){
+            System.out.println(e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("VectorStore creation failed.");
         }
     }
@@ -272,12 +278,16 @@ public class QuizGen implements Runnable{
 
             } catch (Exception e) {
                 if (e.getMessage().matches("503")) {
+                    System.out.println(e.getMessage());
+                    e.printStackTrace();
                     // control will reach here if the embedding API fails.
                     System.out.printf("Embedding service unavailable: retrying(%d/3) \n", retries+1);
                     // if the API fails the loop will try 2 more times, then give up.
                 } else {
                     // control will reach here in case of an unexpected error.
-                    System.out.println("Grading Exception" + e);
+                    System.out.println("Grading Exception");
+                    System.out.println(e.getMessage());
+                    e.printStackTrace();
                     return null;
                 }
             }

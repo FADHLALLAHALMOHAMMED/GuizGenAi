@@ -87,7 +87,7 @@ public abstract class Page extends JPanel implements ActionListener {
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
-
+                    if(HelperFunctions.confirmUserAction("Are you sure you want to logout?", window)) return;
                     window.switchPage(new StartPage(window));
                 }
             });
@@ -819,7 +819,7 @@ class QuizPage extends Page{
             int submissionId = Database.saveSubmission(quizScrollPane.getAnswersArray(), window.getUser().id, window.quiz.id);
             JOptionPane.showMessageDialog(window, "Quiz Submitted Successfully");
             window.switchPage(new StudentHomePage(window));
-            HelperFunctions.gradeSubmission(submissionId);
+            HelperFunctions.gradeSubmission(submissionId, window.getUser().id);
         }
     }
 }
@@ -1215,63 +1215,32 @@ class StudentViewQuizzesPage extends Page{
 
 class ManageStudentPage extends Page{
     JButton backButton = GUI_Elements.button("Back");
-    Vector<Quiz> quizzes = new Vector<>();
-    Vector<Submission> submissions = new Vector<>();
     ManageStudentPage(Window window){
         super(window);
         Student student = window.getCurrentStudent();
-        Class class_ = window.getCurrentClass();
-
-        // retrieves a vector of quizzes and a vector of the students submissions for a specific student in a specific class.
-        // notice that the function returns by reference -not by value- because we need to get 2 values.
-        // take note that the quizzes and submissions are, and must be, of the same size for the following code to function.
-        // check the documentation of the 'getQuizzesByClass()' function for more info.
-        Database.getQuizzesByClass(class_.id, student.id, quizzes, submissions);
-
         pageTitle.setText(student.firstName + " " + student.lastName);
         contentPanel.setLayout(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(2, 5, 2, 5);
         c.gridx = 0; c.gridy = 0;
 
-        JPanel studentInfoPanel = new JPanel(new GridBagLayout());
-        studentInfoPanel.setBackground(GUI_Elements.APP_BACKGROUND);
-        c.anchor = GridBagConstraints.LINE_START;
-        c.fill = GridBagConstraints.NONE;
-        studentInfoPanel.add(GUI_Elements.label(String.format("Student name: %s %s", student.firstName, student.lastName)), c);
-        c.gridy++;
-        studentInfoPanel.add(GUI_Elements.label(String.format("Student ID: %d", student.id)), c);
-        c.gridy++;
-        studentInfoPanel.add(GUI_Elements.label(String.format("Student Email: %s", student.email)), c);
-        c.gridy++;
-        studentInfoPanel.add(GUI_Elements.label(String.format("Phone Number: %s", student.phoneNumber)), c);
-        c.gridy++;
-        studentInfoPanel.add(GUI_Elements.label(String.format("Students Points: %d", student.points)), c);
-        // todo: allow student Object to store last login date.
+        JTabbedPane tabs = new JTabbedPane();
+        JPanel studentInfoTab = new StudentInfoTab(window);
+        JPanel submissionsTab = new InstructorViewStudentSubmissionsTab(window);
+        JPanel trophiesTab = new InstructorViewStudentClassTrophies(window);
 
-        c.anchor = GridBagConstraints.CENTER;
-        c.gridx = 0; c.gridy = 0;
+        tabs.addTab("Student Information", studentInfoTab);
+        tabs.addTab("Student Submissions", submissionsTab);
+        tabs.addTab("Student Trophies", trophiesTab);
 
-        c.insets = new Insets(10, 325, 10, 325);
-        c.fill = GridBagConstraints.BOTH;
-        contentPanel.add(studentInfoPanel, c);
-
-        c.insets = new Insets(10, 23, 10, 23);
+        contentPanel.add(tabs, c);
+        contentPanel.add(tabs, c);
         c.gridy++;
         c.anchor = GridBagConstraints.CENTER;
-
-
-        QuizDisplayTable table = new QuizDisplayTable(window, quizzes, submissions);
-
-        JScrollPane quizDisplayScrollPane = new JScrollPane(table);
-        quizDisplayScrollPane.setBorder(BorderFactory.createLineBorder(GUI_Elements.APP_BACKGROUND));
-        contentPanel.add(quizDisplayScrollPane, c);
 
         c.insets = new Insets(10, 325, 10, 325);
         backButton.addActionListener(this);
         c.gridy++;
         contentPanel.add(backButton, c);
-        quizDisplayScrollPane.setViewportView(table);
     }
 
     @Override
@@ -1465,6 +1434,160 @@ class StudentViewAllSubmissions extends Page{
     public void actionPerformed(ActionEvent e) {
         if(e.getSource() == backButton){
             window.switchPage(new StudentHomePage(window));
+        }
+    }
+}
+
+class ComposeFeedbackPage extends Page {
+    JTextField subjectField;
+    JTextArea messageArea;
+    int instructorId;
+    int studentId;
+    JButton sendButton;
+    JButton backButton;
+    public ComposeFeedbackPage(Window window, int instructorId, int studentId) {
+        super(window);
+        setLayout(new BorderLayout());
+        this.instructorId = instructorId;
+        this.studentId = studentId;
+        subjectField = new JTextField();
+        messageArea = new JTextArea();
+
+        sendButton = GUI_Elements.button("Send");
+        sendButton.addActionListener(this);
+
+        JPanel panel = new JPanel(new GridLayout(3, 1));
+        panel.add(new JLabel("Subject:"));
+        panel.add(subjectField);
+        panel.add(new JLabel("Message:"));
+        add(panel, BorderLayout.NORTH);
+        add(new JScrollPane(messageArea), BorderLayout.CENTER);
+        add(sendButton, BorderLayout.SOUTH);
+
+        setVisible(true);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if(e.getSource() == backButton){
+            window.switchPage(new ManageStudentPage(window));
+        } else if(e.getSource() == sendButton) {
+            String subject = subjectField.getText();
+            String message = messageArea.getText();
+            Database.sendFeedback(instructorId, studentId, subject, message);
+            JOptionPane.showMessageDialog(this, "Message Sent!");
+            window.switchPage(new ManageStudentPage(window));
+        }
+    }
+}
+
+class AwardTrophyPage extends Page {
+    JTextArea descriptionTextArea = new JTextArea(4, 40);
+    JLabel descriptionLabel = GUI_Elements.label("Enter Student Achievement");
+    JButton awardTrophyButton = GUI_Elements.button("Award Trophy");
+    JButton selectIconButton = GUI_Elements.button("Select Trophy Icon");
+    JButton cancelButton = GUI_Elements.button("Cancel");
+    JPanel localPanel = GUI_Elements.panel(new GridBagLayout());
+    JFileChooser fileChooser = new JFileChooser();
+
+    AwardTrophyPage(Window window) {
+        super(window);
+        contentPanel.setLayout(new GridBagLayout());
+        pageTitle.setText("Award Trophy");
+
+        descriptionTextArea.setLineWrap(true);
+        descriptionTextArea.setWrapStyleWord(true);
+
+        cancelButton.setBackground(GUI_Elements.WARNING_BACKGROUND);
+        cancelButton.setBorder(GUI_Elements.BLACK_BORDER);
+
+        selectIconButton.setPreferredSize(new Dimension(150, GUI_Elements.textFieldSize1.height));
+        awardTrophyButton.setPreferredSize(new Dimension((GUI_Elements.textFieldSize1.width + selectIconButton.getPreferredSize().width + 20), GUI_Elements.BUTTON_SIZE.height));
+        cancelButton.setPreferredSize(new Dimension((GUI_Elements.textFieldSize1.width + selectIconButton.getPreferredSize().width + 20), GUI_Elements.BUTTON_SIZE.height));
+
+        selectIconButton.addActionListener(this);
+        awardTrophyButton.addActionListener(this);
+        cancelButton.addActionListener(this);
+
+
+        // Grid Managemenet -----------------------------------------------------------------------------------------
+
+        GridBagConstraints contentPanelGBC = new GridBagConstraints();
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+
+
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.anchor = GridBagConstraints.WEST;
+        localPanel.add(descriptionLabel, gbc);
+
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridy++;
+        localPanel.add(descriptionTextArea, gbc);
+
+        gbc.gridx++;
+        localPanel.add(selectIconButton, gbc);
+
+
+        gbc.insets = new Insets(20, 10, 10, 10);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 2;
+        localPanel.add(awardTrophyButton, gbc);
+
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.gridy++;
+        localPanel.add(cancelButton, gbc);
+
+
+        contentPanelGBC.gridx = 0;
+        contentPanelGBC.gridy = 0;
+        contentPanelGBC.fill = GridBagConstraints.BOTH;
+        contentPanelGBC.anchor = GridBagConstraints.CENTER;
+        contentPanel.add(localPanel, contentPanelGBC);
+    }
+
+    public void actionPerformed(ActionEvent e) {
+
+        if (e.getSource() == selectIconButton) {
+
+            int returnVal = fileChooser.showOpenDialog(this);
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                String filePath = fileChooser.getSelectedFile().getAbsolutePath();
+
+                if (!HelperFunctions.isValidImage(filePath)) {
+                    JOptionPane.showMessageDialog(
+                            window,
+                            "The Icon file format must be: \".png\", \".gif\", or \".jpeg\".",
+                            "Invalid Image",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                    fileChooser.setSelectedFile(null);
+                }
+            }
+        } else if(e.getSource() == awardTrophyButton){
+            if(fileChooser.getSelectedFile() == null){
+                HelperFunctions.showDialogIfError("You must select an Image for the Trophy", window);
+                return;
+            }
+            String filePath = fileChooser.getSelectedFile().getAbsolutePath();
+            Database.insertTrophy(window.getCurrentClass().id, window.getCurrentStudent().id,
+                    filePath, descriptionTextArea.getText());
+            JOptionPane.showMessageDialog(
+                    window,
+                    "Trophy awarded successfully.",
+                    "Successful Operation",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+            window.switchPage(new ManageStudentPage(window));
+        } else if(e.getSource() == cancelButton){
+            window.switchPage(new ManageStudentPage(window));
         }
     }
 }

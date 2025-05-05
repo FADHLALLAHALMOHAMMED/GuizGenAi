@@ -3,8 +3,6 @@ package org.Program;
 import org.Program.Entities.*;
 import org.Program.Entities.Class;
 
-import com.github.jaiimageio.impl.plugins.gif.GIFImageMetadata;
-
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
@@ -13,10 +11,9 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 import static java.awt.GridBagConstraints.CENTER;
-import static java.awt.GridBagConstraints.HORIZONTAL;
-import static java.awt.GridBagConstraints.LAST_LINE_END;
 import static java.awt.GridBagConstraints.LINE_START;
 import static java.awt.GridBagConstraints.NONE;
 
@@ -580,6 +577,7 @@ class EditMCQuestionPane extends EditQuestionPane {
             radioButtonsPanel.add(correctAnswerSelectorButton, radioC);
             radioC.gridy++;
         }
+        correctAnswerSelectors.get(question.correctAnswerIndex).setSelected(true);
         
         // choices text fields panel ---------------------------------------------------------------------
         JPanel textFieldsPanel = GUI_Elements.panel(new GridBagLayout());
@@ -945,7 +943,7 @@ class ManageStudentsListPanel extends JPanel implements ActionListener, ListSele
         JLabel manageStudentsLabel = GUI_Elements.label("Manage Students");
         manageStudentsLabel.setForeground(Color.BLACK);
         manageStudentsLabel.setFont(new Font(GUI_Elements.TEXT_FONT, Font.BOLD, 20));
-        JLabel descriptionLabel = GUI_Elements.label("Select one or more students to manaage:");
+        JLabel descriptionLabel = GUI_Elements.label("Select one or more students to manage:");
         descriptionLabel.setForeground(Color.BLACK);
 
         JPanel studentsListPanel = GUI_Elements.panel(new GridBagLayout());
@@ -1798,4 +1796,128 @@ class QuizSubmissionDisplay extends JPanel{
         return essayQuestions;
     }
 }
+
+class TrophyViewTable extends JPanel {
+    TrophyViewTable(List<Trophy> trophies) {
+        Vector<String> headers = new Vector<>(Arrays.asList("Trophy", "Class", "Achievement"));
+        System.out.println(trophies.size());
+        Table table = new Table(headers);
+        table.setBackground(new Color(238, 238, 228));
+        int row = 0;
+        int col = 0;
+        for (Trophy trophy : trophies) {
+            table.insert(new JLabel(trophy.getTrophyIcon()), row, col++);
+            table.insert(GUI_Elements.label(trophy.getDescription()), row, col);
+            row++;
+            col = 0;
+        }
+        this.add(table);
+    }
+}
+
+class StudentViewClassTrophies extends JPanel{
+    StudentViewClassTrophies(Window window){
+        List<Trophy> trophies = Database.getTrophiesForStudentInClass(window.getUser().id, window.getCurrentClass().id);
+        TrophyViewTable trophyTable = new TrophyViewTable(trophies);
+        this.add(new JScrollPane(trophyTable));
+    }
+}
+
+class InstructorViewStudentClassTrophies extends JPanel implements ActionListener{
+    JButton newTrophyButton = GUI_Elements.button("Award New Trophy");
+    Window window;
+    InstructorViewStudentClassTrophies(Window window){
+        this.window = window;
+        this.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0; gbc. gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridwidth = 1;
+
+        List<Trophy> trophies = Database.getTrophiesForStudentInClass(window.getCurrentStudent().id, window.getCurrentClass().id);
+        TrophyViewTable trophyTable = new TrophyViewTable(trophies);
+        this.add(new JScrollPane(trophyTable), gbc);
+        gbc.gridy++;
+        newTrophyButton.addActionListener(this);
+        gbc.fill = GridBagConstraints.NONE;
+        this.add(newTrophyButton, gbc);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        window.switchPage(new AwardTrophyPage(window));
+    }
+}
+
+class InstructorViewStudentSubmissionsTab extends JPanel{
+    Vector<Quiz> quizzes = new Vector<>();
+    Vector<Submission> submissions = new Vector<>();
+    Window window;
+    InstructorViewStudentSubmissionsTab(Window window){
+        this.window = window;
+        Student student = window.getCurrentStudent();
+        Class class_ = window.getCurrentClass();
+
+        // retrieves a vector of quizzes and a vector of the students submissions for a specific student in a specific class.
+        // notice that the function returns by reference -not by value- because we need to get 2 values.
+        // take note that the quizzes and submissions are, and must be, of the same size for the following code to function.
+        // check the documentation of the 'getQuizzesByClass()' function for more info.
+        Database.getQuizzesByClass(class_.id, student.id, quizzes, submissions);
+
+        this.setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 0; c.gridy = 0;
+        c.fill = GridBagConstraints.BOTH;
+
+        c.insets = new Insets(10, 23, 10, 23);
+        c.gridy++;
+        c.anchor = GridBagConstraints.CENTER;
+
+
+        QuizDisplayTable table = new QuizDisplayTable(window, quizzes, submissions);
+        JScrollPane quizDisplayScrollPane = new JScrollPane(table);
+        quizDisplayScrollPane.setBorder(BorderFactory.createLineBorder(GUI_Elements.APP_BACKGROUND));
+        this.add(quizDisplayScrollPane, c);
+        quizDisplayScrollPane.setViewportView(table);
+    }
+}
+
+class StudentInfoTab extends JPanel{
+    StudentInfoTab(Window window){
+        Student student = window.getCurrentStudent();
+
+        this.setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(2, 5, 2, 5);
+        c.gridx = 0; c.gridy = 0;
+
+        JPanel studentInfoPanel = new JPanel(new GridBagLayout());
+        studentInfoPanel.setBackground(GUI_Elements.APP_BACKGROUND);
+        c.anchor = GridBagConstraints.LINE_START;
+        c.fill = GridBagConstraints.NONE;
+        studentInfoPanel.add(GUI_Elements.label(String.format("Student name: %s %s", student.firstName, student.lastName)), c);
+        c.gridy++;
+        studentInfoPanel.add(GUI_Elements.label(String.format("Student ID: %d", student.id)), c);
+        c.gridy++;
+        studentInfoPanel.add(GUI_Elements.label(String.format("Student Email: %s", student.email)), c);
+        c.gridy++;
+        studentInfoPanel.add(GUI_Elements.label(String.format("Phone Number: %s", student.phoneNumber)), c);
+        c.gridy++;
+        studentInfoPanel.add(GUI_Elements.label(String.format("Students Points: %d", student.points)), c);
+        c.gridy++;
+        studentInfoPanel.add(GUI_Elements.label(String.format("Last Login Time: %s", student.lastLogin)), c);
+        c.anchor = GridBagConstraints.CENTER;
+        c.gridx = 0; c.gridy = 0;
+
+        c.insets = new Insets(10, 325, 10, 325);
+        c.fill = GridBagConstraints.BOTH;
+        this.add(studentInfoPanel, c);
+    }
+
+}
+
+
 

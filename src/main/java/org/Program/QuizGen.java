@@ -53,64 +53,76 @@ public class QuizGen implements Runnable{
      */
     @Override
     public void run(){
-        try {
-            JProgressBar progressBar = ((WaitingPage) window.getPage()).progressBar;
-            ContentRetriever contentRetriever = getVectorStore(filePath); // get the embedding of the document.
+        for(int retries = 0; retries < 3; retries++) {
+            try {
+                JProgressBar progressBar = ((WaitingPage) window.getPage()).progressBar;
+                ContentRetriever contentRetriever = getVectorStore(filePath); // get the embedding of the document.
 
-            if(mode == 1) { // if the mode is 1, return a genuine reply from the users document.
+                if (mode == 1) { // if the mode is 1, return a genuine reply from the users document.
 
-                progressBar.setValue(50);
-                // define the LLM Model
-                ChatLanguageModel chatModel = GoogleAiGeminiChatModel.builder()
-                        .apiKey(Constants.gemini_api_key)
-                        .modelName("gemini-1.5-flash")
-                        .build();
+                    progressBar.setValue(50);
+                    // define the LLM Model
+                    ChatLanguageModel chatModel = GoogleAiGeminiChatModel.builder()
+                            .apiKey(Constants.gemini_api_key)
+                            .modelName("gemini-1.5-flash")
+                            .build();
 
-                progressBar.setValue(55);
+                    progressBar.setValue(55);
 
-                interface Assistant {String chat(String userMessage);}
+                    interface Assistant {
+                        String chat(String userMessage);
+                    }
 
-                // define the pipe line.
-                Assistant assistant = AiServices.builder(Assistant.class)
-                        .chatLanguageModel(chatModel)
-                        .chatMemory(MessageWindowChatMemory.withMaxMessages(1))
-                        .contentRetriever(contentRetriever)
-                        .build();
-                progressBar.setValue(60);
+                    // define the pipe line.
+                    Assistant assistant = AiServices.builder(Assistant.class)
+                            .chatLanguageModel(chatModel)
+                            .chatMemory(MessageWindowChatMemory.withMaxMessages(1))
+                            .contentRetriever(contentRetriever)
+                            .build();
+                    progressBar.setValue(60);
 
-                // ask the chat model to generate the quiz.
-                String reply = assistant.chat(Constants.quizTemplate);
-                progressBar.setValue(90);
+                    // ask the chat model to generate the quiz.
+                    String reply = assistant.chat(Constants.quizTemplate);
+                    progressBar.setValue(90);
 
-                // parse the reply the get the questions.
-                questions = Question.process(reply);
-                System.out.println(reply);
-                progressBar.setValue(95);
+                    // parse the reply the get the questions.
+                    questions = Question.process(reply);
+                    System.out.println(reply);
+                    progressBar.setValue(95);
+
+                } else { // if the mode is not 1, return a sample quiz.
+                    int value = 0;
+                    for (int i = 0; i < 20; i++) {
+                        Thread.sleep(50);
+                        progressBar.setValue(value);
+                        value += 5;
+                    }
+
+                    questions = Question.process(Constants.sampleReply);
+                }
 
                 // switch the page to the edit question Page.
                 window.switchPage(new EditQuizPage(window));
+                filePath = null;
+                return;
 
-            } else { // if the mode is not 1, return a sample quiz.
-                int value = 0;
-                for(int i = 0; i < 20; i++){
-                    Thread.sleep(50);
-                    progressBar.setValue(value);
-                    value += 5;
+            } catch (Exception e) {
+                if (e.getMessage().matches("503")) {
+                    // control will reach here if the embedding API fails.
+                    System.out.printf("Embedding service unavailable: retrying(%d/3) \n", retries+1);
+                    // if the API fails the loop will try 2 more times, then give up and show an error message.
+                } else {
+                    // control will reach here in case of unexpected error or user pressing cancel in waiting Page.
+                    System.out.println("Thread1 Successfully interrupted: " + e);
+                    window.switchPage(new InstructorHomePage(window));
+                    filePath = null;
+                    return;
                 }
-
-                questions = Question.process(Constants.sampleReply);
-                window.switchPage(new EditQuizPage(window));
             }
-
-        } catch(Exception e){ // to treat the "Thread1 Successfully interrupted: java.lang.RuntimeException: status code: 503; body: " Exception
-            if(e.getMessage().matches("503")) {
-                System.out.println("Embedding service unavailable");
-                window.switchPage(new InstructorHomePage(window));
-            } else
-                System.out.println("Thread1 Successfully interrupted: " + e);
-        } finally{
-            filePath = null;
         }
+        HelperFunctions.showDialogIfError("Embedding service unavailable.", window);
+        filePath = null;
+        window.switchPage(new InstructorHomePage(window));
     }
 
     /**
@@ -134,9 +146,8 @@ public class QuizGen implements Runnable{
             // so, the 32 bytes returned from the hash will turn into a 44 character long string.
 
         }catch(Exception e){
-            System.out.printf("An error occurred: %s\n", e.getMessage());
+            throw new RuntimeException("File Hashing function failed");
         }
-        throw new RuntimeException("Error");
     }
 
     /**
@@ -148,23 +159,28 @@ public class QuizGen implements Runnable{
      * @return a ContentRetriever that has the embeddings of this document.
      */
     public static ContentRetriever createVectorStore(String filepath, String hash, EmbeddingModel embeddingModel){
-        // todo: The parsed text has a lot of copyright labels e.g., "© COPYRIGHT 1992-2015 BY PEARSON EDUCATION,INC. ALL RIGHTS RESERVED."
-        //  see if there is a setting in the parser to remove them can be removed. regardless, LLM output is satisfactory even with them.
-        Document document = FileSystemDocumentLoader.loadDocument(filepath, new ApacheTikaDocumentParser()); // parse the document, get the text
-        DocumentSplitter splitter = new DocumentByWordSplitter(1000, 200);
-        List<TextSegment> splits = splitter.split(document);// split the text
+        try {
+            // todo: The parsed text has a lot of copyright labels e.g., "© COPYRIGHT 1992-2015 BY PEARSON EDUCATION,INC. ALL RIGHTS RESERVED."
+            //  see if there is a setting in the parser to remove them can be removed. regardless, LLM output is satisfactory even with them.
+            Document document = FileSystemDocumentLoader.loadDocument(filepath, new ApacheTikaDocumentParser()); // parse the document, get the text
+            DocumentSplitter splitter = new DocumentByWordSplitter(1000, 200);
+            List<TextSegment> splits = splitter.split(document);// split the text
 
-        InMemoryEmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>(); // create an embedding store
-        Response<List<Embedding>> embeddings = embeddingModel.embedAll(splits); // have the model embed the text splits
-        embeddingStore.addAll(embeddings.content(), splits); // store the embeddings
-        Database.storeEmbeddings(embeddingStore, hash); // store the embeddings along with the hash in the database.
+            InMemoryEmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>(); // create an embedding store
+            Response<List<Embedding>> embeddings = embeddingModel.embedAll(splits); // have the model embed the text splits
+            embeddingStore.addAll(embeddings.content(), splits); // store the embeddings
+            Database.storeEmbeddings(embeddingStore, hash); // store the embeddings along with the hash in the database.
 
-        return EmbeddingStoreContentRetriever.builder() // create, and return the content retriever.
-                .embeddingStore(embeddingStore)
-                .embeddingModel(embeddingModel)
-                .maxResults(5)
-                .minScore(0.0)
-                .build();
+            return EmbeddingStoreContentRetriever.builder() // create, and return the content retriever.
+                    .embeddingStore(embeddingStore)
+                    .embeddingModel(embeddingModel)
+                    .maxResults(5)
+                    .minScore(0.0)
+                    .build();
+
+        }catch(Exception e){
+            throw new RuntimeException("VectorStore creation failed.");
+        }
     }
 
     /**
@@ -178,25 +194,30 @@ public class QuizGen implements Runnable{
      * @return A ContentRetriever that contains the embeddings of the document.
      */
     public static ContentRetriever getVectorStore(String filepath){
-        EmbeddingModel embeddingModel = HuggingFaceEmbeddingModel.builder()
-                .accessToken(Constants.huggingFaceAPIKey)
-                .modelId("sentence-transformers/all-MiniLM-L6-v2")
-                .waitForModel(true)
-                .timeout(ofSeconds(60))
-                .build();
-
-        String hash = getHash(filepath); // get the hash of the document
-        QuizGen.documentHash = hash;
-        InMemoryEmbeddingStore<TextSegment> embeddings = Database.retrieveEmbeddings(hash); // search for a match in the database.
-        if(embeddings != null) // if not null, then a match was found
-            return EmbeddingStoreContentRetriever.builder() // return match
-                    .embeddingStore(embeddings)
-                    .embeddingModel(embeddingModel)
-                    .maxResults(5)
-                    .minScore(0.0)
+        try {
+            EmbeddingModel embeddingModel = HuggingFaceEmbeddingModel.builder()
+                    .accessToken(Constants.huggingFaceAPIKey)
+                    .modelId("sentence-transformers/all-MiniLM-L6-v2")
+                    .waitForModel(true)
+                    .timeout(ofSeconds(60))
                     .build();
 
-        return createVectorStore(filepath, hash, embeddingModel); // if not match was found generate the embeddings
+            String hash = getHash(filepath); // get the hash of the document
+            QuizGen.documentHash = hash;
+            InMemoryEmbeddingStore<TextSegment> embeddings = Database.retrieveEmbeddings(hash); // search for a match in the database.
+            if (embeddings != null) // if not null, then a match was found
+                return EmbeddingStoreContentRetriever.builder() // return match
+                        .embeddingStore(embeddings)
+                        .embeddingModel(embeddingModel)
+                        .maxResults(5)
+                        .minScore(0.0)
+                        .build();
+
+            return createVectorStore(filepath, hash, embeddingModel); // if not match was found generate the embeddings
+
+        }catch (Exception e){
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     /**
@@ -206,39 +227,61 @@ public class QuizGen implements Runnable{
      * @return The reply of the LLM as a String that contains each question's grades and justifications for each grade.
      */
     public static String gradeEssay(int submissionId, String prompt){
-        String embeddingsJSON = Database.getEmbeddingsBySubmission(submissionId);
-        if(embeddingsJSON == null){
-            System.out.println("No embeddings found for the Quiz: the essay questions can't be graded.");
-            return null;
+        for(int retries = 0; retries < 3; retries++) { // retry to do this 3 times.
+            try {
+                String embeddingsJSON = Database.getEmbeddingsBySubmission(submissionId); // get the embeddings of the quiz.
+                if (embeddingsJSON == null) {
+                    System.out.println("No embeddings found for the Quiz: the essay questions can't be graded.");
+                    return null;
+                }
+                System.out.println(prompt);
+
+                EmbeddingModel embeddingModel = HuggingFaceEmbeddingModel.builder()
+                        .accessToken(Constants.huggingFaceAPIKey)
+                        .modelId("sentence-transformers/all-MiniLM-L6-v2")
+                        .waitForModel(true)
+                        .timeout(ofSeconds(60))
+                        .build();
+                System.out.println("reached point 2");
+
+                ContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder() // return match
+                        .embeddingStore(InMemoryEmbeddingStore.fromJson(embeddingsJSON))
+                        .embeddingModel(embeddingModel)
+                        .maxResults(5)
+                        .minScore(0.0)
+                        .build();
+
+                ChatLanguageModel chatModel = GoogleAiGeminiChatModel.builder()
+                        .apiKey(Constants.gemini_api_key)
+                        .modelName("gemini-1.5-flash")
+                        .build();
+
+                System.out.println("reached point 3");
+
+                interface Assistant {
+                    String chat(String userMessage);
+                }
+                Assistant assistant = AiServices.builder(Assistant.class)
+                        .chatLanguageModel(chatModel)
+                        .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
+                        .contentRetriever(contentRetriever)
+                        .build();
+                System.out.println("reached point 4");
+                //        return Constants.sampleGradingReply;
+                return assistant.chat(prompt);
+
+            } catch (Exception e) {
+                if (e.getMessage().matches("503")) {
+                    // control will reach here if the embedding API fails.
+                    System.out.printf("Embedding service unavailable: retrying(%d/3) \n", retries+1);
+                    // if the API fails the loop will try 2 more times, then give up.
+                } else {
+                    // control will reach here in case of an unexpected error.
+                    System.out.println("Grading Exception" + e);
+                    return null;
+                }
+            }
         }
-
-        EmbeddingModel embeddingModel = HuggingFaceEmbeddingModel.builder()
-                .accessToken(Constants.huggingFaceAPIKey)
-                .modelId("sentence-transformers/all-MiniLM-L6-v2")
-                .waitForModel(true)
-                .timeout(ofSeconds(60))
-                .build();
-
-        ContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder() // return match
-                .embeddingStore(InMemoryEmbeddingStore.fromJson(embeddingsJSON))
-                .embeddingModel(embeddingModel)
-                .maxResults(5)
-                .minScore(0.0)
-                .build();
-
-        ChatLanguageModel chatModel = GoogleAiGeminiChatModel.builder()
-                .apiKey(Constants.gemini_api_key)
-                .modelName("gemini-1.5-flash")
-                .build();
-
-        interface Assistant {String chat(String userMessage);}
-        Assistant assistant = AiServices.builder(Assistant.class)
-                .chatLanguageModel(chatModel)
-                .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
-                .contentRetriever(contentRetriever)
-                .build();
-
-//        return Constants.sampleGradingReply;
-        return assistant.chat(prompt);
+        return null;
     }
 }

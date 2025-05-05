@@ -7,6 +7,8 @@ import org.Program.Entities.Class;
 
 import java.sql.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Vector;
 
@@ -26,7 +28,6 @@ public class Database {
         }
         throw new RuntimeException("Failed to establish connection");
     }
-//    private static Connection connection;
 
     public static int checkUser(String email, String phoneNumber){
         int result = 0;
@@ -82,11 +83,11 @@ public class Database {
                 Connection connection = getConnection();
                 PreparedStatement registrationUpdate = connection.prepareStatement(registrationDML)
         ){
-            registrationUpdate.setString(1,  firstName);
+            registrationUpdate.setString(1, firstName);
             registrationUpdate.setString(2, lastName);
             registrationUpdate.setString(3, email);
             registrationUpdate.setString(4, password);
-            registrationUpdate.setString(5,phoneNumber);
+            registrationUpdate.setString(5, phoneNumber);
 
             registrationUpdate.executeUpdate();
 
@@ -102,7 +103,7 @@ public class Database {
                     """;
 
         String studentLoginDML = """
-                     select StudentId, firstName, LastName, Email, PhoneNumber, Points from Students
+                     select StudentId, firstName, LastName, Email, PhoneNumber, Points, lastLogin from Students
                      where email = ? and password = ?;
                     """;
 
@@ -124,7 +125,11 @@ public class Database {
             studentLoginQuery.setString(2, password);
 
             try(ResultSet resultSet = studentLoginQuery.executeQuery()){
-                if(resultSet.next()) return readStudent(resultSet);
+                if(resultSet.next()) {
+                    Student student = readStudent(resultSet);
+                    HelperFunctions.StudentLoginRewards(student.id, student.lastLogin);
+                    return student;
+                }
             }
 
         } catch(SQLException e){
@@ -150,7 +155,8 @@ public class Database {
                 resultSet.getString(3),
                 resultSet.getString(4),
                 resultSet.getString(5),
-                resultSet.getInt(6)
+                resultSet.getInt(6),
+                resultSet.getTimestamp(7)
         );
     }
 
@@ -288,7 +294,7 @@ public class Database {
     public static Vector<Student> getStudentsNotInClass(int classID){
         Vector<Student> students = new Vector<>();
         String studentDML = """
-                select studentId, FirstName, LastName, email, phoneNumber, Points from students
+                select studentId, FirstName, LastName, email, phoneNumber, Points, LastLogin from students
                 where studentId not in (select student from students_classes where class = ?);
                 """;
 
@@ -313,7 +319,7 @@ public class Database {
     public static Vector<Student> getStudentsInClass(int classID){
         Vector<Student> students = new Vector<>();
         String studentQuery = """
-                select studentId, FirstName, LastName, email, phoneNumber, Points from students
+                select studentId, FirstName, LastName, email, phoneNumber, Points, LastLogin from students
                 where studentId in (select student from students_classes where class = ?);
                 """;
 
@@ -386,15 +392,11 @@ public class Database {
 
     public static String addQuiz(String title, java.util.Date startTime, java.util.Date endTime, Vector<Class> classes,
                                  Vector<Question> questions, int instructorId, String embeddingsHash){
-                                    
+
         if(classes.isEmpty()) return "No class selected: Quiz must be assigned to at least one class.";
 
         // test if start or end date is in the past
         Timestamp CurrentDateTime = new Timestamp(System.currentTimeMillis());
-
-        System.out.println("Current time: " + CurrentDateTime.toString());
-        System.out.println("Start time: " + startTime.toString());
-        System.out.println("End time: " + endTime.toString());
         if(startTime.before(CurrentDateTime) || endTime.before(CurrentDateTime))
             return "Invalid Start or End Time: Quiz start or end time cannot be in the past.";
 
@@ -404,10 +406,16 @@ public class Database {
 
         String matchingTitleDML = "select * from Quizzes where Title = ?";
         String addQuizDML = """
-                insert into Quizzes (title, startDateTime, endDateTime, Instructor, embeddings)
-                value(?, ?, ?, ?, ?);
+                insert into Quizzes (title, startDateTime, endDateTime, Instructor, embeddings, fullMark)
+                value(?, ?, ?, ?, ?, ?);
                 """;
         String assignClassesQuizzesDML = "insert into classes_quizzes (class, quiz) values (?, ?)";
+
+        int fullMark = 0;
+        for(Question question: questions){      // calculate the full mark on the quiz
+            if(question instanceof MCQuestion) fullMark += 1; // each MCQ is worth 1 mark
+            else fullMark += 2; // each essay is worth 2 marks
+        }
 
         try (
                 Connection connection = getConnection();
@@ -429,6 +437,7 @@ public class Database {
             addQuizQuery.setTimestamp(3, new Timestamp(endTime.getTime()));
             addQuizQuery.setInt(4, instructorId);
             addQuizQuery.setString(5, embeddingsHash);
+            addQuizQuery.setInt(6, fullMark);
             addQuizQuery.executeUpdate();
 
             // connect Quiz with classes
@@ -640,7 +649,7 @@ public class Database {
     public static void getQuizzesByClass(int classId, int studentId, Vector<Quiz> quizzes, Vector<Submission> submissions){
         String getQuizzesDML = """
                     select q.quizId, q.Title, q.StartDateTime, q.EndDateTime, q.instructor,
-                    s.submissionId, s.timeSubmitted, s.StudentMark, s.FullMark
+                    s.submissionId, s.timeSubmitted, s.StudentMark, q.FullMark
                     from quizzes q left join submissions s
                     on q.quizId = s.quiz and s.student = ?
                     where q.quizID in
@@ -870,7 +879,7 @@ public class Database {
             }
 
         } catch (SQLException e) {
-            System.out.println("Operation failed: " + e.getMessage());
+            throw new RuntimeException("Embeddings retrieval from database failed.");
         }
         return null;
     }
@@ -901,10 +910,10 @@ public class Database {
         }
     }
 
-    public static void gradeSubmission(int submissionId, int[] marks){
+    public static void gradeSubmission(int submissionId, int studentMark){
         String gradeSubmissionDML = """
                     update submissions
-                    set studentMark = ?, fullMark = ?
+                    set studentMark = ?
                     where submissionId = ?
                     """;
 
@@ -913,9 +922,8 @@ public class Database {
                 PreparedStatement ps = connection.prepareStatement(gradeSubmissionDML)
         ){
 
-            ps.setInt(1, marks[0]);
-            ps.setInt(2, marks[1]);
-            ps.setInt(3, submissionId);
+            ps.setInt(1, studentMark);
+            ps.setInt(2, submissionId);
 
             ps.executeUpdate();
 
@@ -927,7 +935,7 @@ public class Database {
     public static void addPointsToStudent(int studentId, int amount){
         String addPointsDML = """
                     update Students
-                    set points = points + "?
+                    set points = points + ?
                     where studentId = ?;
                     """;
         try (
@@ -1028,7 +1036,7 @@ public class Database {
     public static void getAllStudentSubmissions(int studentId, Vector<Quiz> quizzes, Vector<Submission> submissions){
         String getSubmissionsDML = """
                 select q.quizId, q.Title, q.StartDateTime, q.EndDateTime, q.instructor,
-                s.submissionId, s.timeSubmitted, s.StudentMark, s.FullMark
+                s.submissionId, s.timeSubmitted, s.StudentMark, q.FullMark
                 from submissions s left Join Quizzes q
                 on s.quiz = q.quizId
                 where s.student = ?
@@ -1062,7 +1070,7 @@ public class Database {
     public static void getAllStudentSubmissionsInClass(int studentId, int classId, Vector<Quiz> quizzes, Vector<Submission> submissions){
         String getSubmissionsDML = """
                 select q.quizId, q.Title, q.StartDateTime, q.EndDateTime, q.instructor,
-                s.submissionId, s.timeSubmitted, s.StudentMark, s.FullMark
+                s.submissionId, s.timeSubmitted, s.StudentMark, q.FullMark
                 from submissions s
                 left Join Quizzes q on s.quiz = q.quizId
                 left Join classes_quizzes cq on cq.quiz = q.quizId
@@ -1124,5 +1132,228 @@ public class Database {
             System.out.println(e.getMessage());
         }
         return quizzes;
+    }
+
+    public static String qenerateTranscript(int studentId){
+        StringBuilder str = new StringBuilder("""
+                --------------------------------------------------------------------------------------------------------
+                                                            Student Transcript
+                --------------------------------------------------------------------------------------------------------
+                                                            Student Information:
+                
+                """);
+        String getStudentInfoDML = """
+                select FirstName, Lastname, StudentId, Points, Email, PhoneNumber
+                from Students where studentId = ?
+                """;
+        String generalQuizInfoDML = """
+                select count(submissionId) as numOfQuizzes,
+                avg(studentMark/fullMark) * 100 as avgGrade
+                from submissions join quizzes
+                on quizzes.QuizID = submissions.quiz
+                where student = ?;
+                """;
+        String last5QuizzesDML = """
+                select Title, studentMark, fullMark
+                from submissions left join quizzes
+                on submissions.quiz = quizzes.QuizID
+                where student = ?
+                order by timeSubmitted desc
+                limit 5;
+                """;
+        String numOfClassesDML = """
+                select count(*) as numOfClasses
+                from students_classes
+                where student = ?;
+                """;
+        String classesDML = """
+                select c.ClassId, c.ClassName, i.firstName, i.LastName, i.email
+                from Students_Classes sc left join classes c
+                on sc.class = c.classId
+                left join instructors i
+                on c.Instructor = i.instructorId
+                where sc.student = ?
+                limit 10;
+                """;
+
+        try(
+                Connection connection = getConnection();
+                PreparedStatement studentInfoStatement = connection.prepareStatement(getStudentInfoDML);
+                PreparedStatement quizInfoStatement = connection.prepareStatement(generalQuizInfoDML);
+                PreparedStatement last5QuizzesStatement = connection.prepareStatement(last5QuizzesDML);
+                PreparedStatement numOfClassesStatement = connection.prepareStatement(numOfClassesDML);
+                PreparedStatement classesStatement = connection.prepareStatement(classesDML);
+        ){
+
+            studentInfoStatement.setInt(1, studentId);
+            try(ResultSet resultSet = studentInfoStatement.executeQuery()){
+                if(!resultSet.next()) return "";
+                str.append(String.format("""
+                        Student Name:  %s %s
+                        StudentID:  %d
+                        Points:  %d
+                        Email Address:  %s
+                        PhoneNumber:  %s
+                       --------------------------------------------------------------------------------------------------------
+                        """, resultSet.getString("FirstName"), resultSet.getString("LastName"),
+                        resultSet.getInt("StudentID"),  resultSet.getInt("Points"),
+                        resultSet.getString("Email"), resultSet.getString("PhoneNumber")));
+            }
+
+            quizInfoStatement.setInt(1, studentId);
+            try(ResultSet resultSet = quizInfoStatement.executeQuery()){
+                if(!resultSet.next()) return "";
+                str.append(String.format("""
+                         Number of quizzes taken:  %d
+                         Average Quiz Performance:  %.2f
+                        
+                        
+                         """, resultSet.getInt("numOfQuizzes"), resultSet.getDouble("avgGrade")));
+            }
+
+            last5QuizzesStatement.setInt(1, studentId);
+            try(ResultSet resultSet = last5QuizzesStatement.executeQuery()){
+                str.append(String.format("""
+                        
+                        --------------------------------------------------------------------------------------------------------
+                         %-32s| %-12S | %s
+                        --------------------------------------------------------------------------------------------------------
+                         """, "Quiz Title", "Student Mark", "Full Mark"));
+                while(resultSet.next()){
+                    str.append(String.format("""
+                         %-32s| %-12d | %d
+                        """, resultSet.getString("Title"), resultSet.getInt("StudentMark"),
+                            resultSet.getInt("FullMark")));
+                }
+                str.append("--------------------------------------------------------------------------------------------------------\n");
+            }
+
+            numOfClassesStatement.setInt(1, studentId);
+            try(ResultSet resultSet = numOfClassesStatement.executeQuery()){
+                if(!resultSet.next()) return "";
+                str.append(String.format("\n\nNumber of Student's Classes: %d\n", resultSet.getInt("numOfClasses")));
+            }
+
+            classesStatement.setInt(1, studentId);
+            try(ResultSet resultSet = classesStatement.executeQuery()){
+                str.append(String.format("""
+                        --------------------------------------------------------------------------------------------------------
+                         %-4s | %-32s | %-32s | %S
+                        --------------------------------------------------------------------------------------------------------
+                         """, "ID", "Class Name", "Instructor Name", "Instructor Email"));
+                while(resultSet.next()){
+                    str.append(String.format("""
+                          %-4d | %-32s | %-32s | %s
+                         """, resultSet.getInt("ClassID"), resultSet.getString("ClassName"),
+                            resultSet.getString("FirstName") + " " + resultSet.getString("LastName"),
+                            resultSet.getString("Email")));
+                }
+                str.append("--------------------------------------------------------------------------------------------------------\n");
+            }
+
+        }catch(SQLException e){
+            System.out.println(e.getMessage());
+        }
+        return str.toString();
+    }
+
+    public static List<Trophy> getTrophiesForStudentInClass(int studentId, int classId) {
+        List<Trophy> trophies = new ArrayList<>();
+        try (Connection conn = getConnection()) {
+            String query = "SELECT * FROM Trophies WHERE student = ? AND class = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setInt(1, studentId);
+            stmt.setInt(2, classId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                trophies.add(new Trophy(
+                        rs.getInt("class"),
+                        rs.getInt("student"),
+                        rs.getString("imagepath"),
+                        rs.getString("description")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return trophies;
+    }
+
+    public static void insertTrophy(int classId, int studentId, String imagePath, String description) {
+        try (Connection conn = getConnection()) {
+            String query = "INSERT INTO Trophies (class, student, imagepath, description) VALUES (?, ?, ?, ?)";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setInt(1, classId);
+            stmt.setInt(2, studentId);
+            stmt.setString(3, imagePath);
+            stmt.setString(4, description);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static List<Trophy> getAllTrophiesForStudent(int studentId) {
+        List<Trophy> trophies = new ArrayList<>();
+        try (Connection conn = getConnection()) {
+            String query = "SELECT * FROM Trophies WHERE student = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setInt(1, studentId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                trophies.add(new Trophy(
+                        rs.getInt("class"),
+                        rs.getInt("student"),
+                        rs.getString("imagepath"),
+                        rs.getString("description")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return trophies;
+    }
+
+    public static void sendFeedback(int instructorId, int studentId, String subjectLine, String messageText) {
+        String query = "INSERT INTO Feedback (Instructor, Student, SubjectLine, MessageText, DateTimeSent) VALUES (?, ?, ?, ?, NOW())";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, instructorId);
+            stmt.setInt(2, studentId);
+            stmt.setString(3, subjectLine);
+            stmt.setString(4, messageText);
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static List<Feedback> getFeedbackForStudent(int studentId) {
+        List<Feedback> feedbackList = new ArrayList<>();
+        String query = "SELECT * FROM Feedback WHERE Student = ? ORDER BY DateTimeSent DESC";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, studentId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                Feedback feedback = new Feedback(
+                        rs.getInt("Instructor"),
+                        rs.getInt("Student"),
+                        rs.getString("SubjectLine"),
+                        rs.getString("MessageText"),
+                        rs.getString("DateTimeSent")
+                );
+                feedbackList.add(feedback);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return feedbackList;
     }
 }

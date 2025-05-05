@@ -6,10 +6,8 @@ import org.Program.Entities.Class;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Vector;
+import java.nio.file.Paths;
+import java.util.*;
 
 public class HelperFunctions {
     /**
@@ -275,7 +273,7 @@ public class HelperFunctions {
      *  6. updates the Essay Answers and submission tables in the database with the student marks.
      * @param submissionId the ID of the submission to be graded.
      */
-    public static void gradeSubmission(int submissionId){
+    public static void gradeSubmission(int submissionId, int studentId){
         int[] marks = Database.getMCQMarks(submissionId);
 
         System.out.printf("The students grade for the mcq questions: %d / %d\n", marks[0], marks[1]);
@@ -285,6 +283,8 @@ public class HelperFunctions {
             String questionsAndAnswers = formatEssayAnswersString(questions);
             String LLMReply = QuizGen.gradeEssay(submissionId, questionsAndAnswers);
 
+            System.out.println(LLMReply);
+
             if(LLMReply != null) {
                 gradeParser(LLMReply, questions);
                 for (EssayQuestion question : questions) {
@@ -293,10 +293,14 @@ public class HelperFunctions {
                     else if (question.grade.matches("partial credit")) marks[0] += 1;
                 }
                 Database.UpdateEssayGrades(questions, submissionId);
+                awardPointsForQuiz(studentId, marks[1], marks[0]);
+            } else {
+                showDialogIfError(
+                        "Essay Questions couldn't be graded: either an exception occurred or no embeddings were found",
+                        null);
             }
         }
-
-        Database.gradeSubmission(submissionId, marks);
+        Database.gradeSubmission(submissionId, marks[0]);
     }
 
     /**
@@ -370,7 +374,7 @@ public class HelperFunctions {
         else if (oneDayAhead.before(currentTime)) points = 20;   // 20 point reward for logging in 2 days in a row.
 
         Database.addPointsToStudent(studentId, points);
-        Database.updateLastLogin(studentId, lastLogin);
+        Database.updateLastLogin(studentId, new Date());
     }
 
     /**
@@ -432,5 +436,21 @@ public class HelperFunctions {
         user.email = email;
         user.phoneNumber = phoneNumber;
         return null;
+    }
+
+    public static void getStudentTranscript(Student student, Window window){
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        int returnVal = fileChooser.showOpenDialog(window);
+        String filepath;
+
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            filepath = fileChooser.getSelectedFile().getAbsolutePath();
+        } else {
+            System.out.println("cancelled by user.");
+            return;
+        }
+
+//        Formatter output = new Formatter(Paths.get(filepath, student.firstName));
     }
 }

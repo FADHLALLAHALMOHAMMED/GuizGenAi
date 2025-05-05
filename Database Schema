@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `quizgenai`.`instructors` (
   PRIMARY KEY (`instructorid`),
   UNIQUE INDEX `Email` (`Email` ASC) VISIBLE)
 ENGINE = InnoDB
-AUTO_INCREMENT = 41
+AUTO_INCREMENT = 0
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
 
@@ -46,11 +46,13 @@ CREATE TABLE IF NOT EXISTS `quizgenai`.`classes` (
   PRIMARY KEY (`ClassID`),
   UNIQUE INDEX `ClassName` (`ClassName` ASC) VISIBLE,
   INDEX `Instructor` (`Instructor` ASC) VISIBLE,
-  CONSTRAINT `classes_ibfk_1`
+  CONSTRAINT `classes_Instructors_fk`
     FOREIGN KEY (`Instructor`)
-    REFERENCES `quizgenai`.`instructors` (`instructorid`))
+    REFERENCES `quizgenai`.`instructors` (`instructorid`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
 ENGINE = InnoDB
-AUTO_INCREMENT = 8
+AUTO_INCREMENT = 0
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
 
@@ -76,18 +78,21 @@ CREATE TABLE IF NOT EXISTS `quizgenai`.`quizzes` (
   `StartDateTime` DATETIME NULL DEFAULT NULL,
   `EndDateTime` DATETIME NULL DEFAULT NULL,
   `Instructor` INT NULL DEFAULT NULL,
+  `fullMark` INT NULL DEFAULT NULL,
   `embeddings` VARCHAR(44) NULL DEFAULT NULL,
   PRIMARY KEY (`QuizID`),
   INDEX `Instructor` (`Instructor` ASC) VISIBLE,
   INDEX `embeddings` (`embeddings` ASC) VISIBLE,
-  CONSTRAINT `quizzes_ibfk_1`
-    FOREIGN KEY (`Instructor`)
-    REFERENCES `quizgenai`.`instructors` (`instructorid`),
   CONSTRAINT `quizzes_ibfk_2`
     FOREIGN KEY (`embeddings`)
-    REFERENCES `quizgenai`.`embeddings` (`hash`))
+    REFERENCES `quizgenai`.`embeddings` (`hash`),
+  CONSTRAINT `quizzes_Instructors_fk`
+    FOREIGN KEY (`Instructor`)
+    REFERENCES `quizgenai`.`instructors` (`instructorid`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
 ENGINE = InnoDB
-AUTO_INCREMENT = 24
+AUTO_INCREMENT = 0
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
 
@@ -100,12 +105,56 @@ CREATE TABLE IF NOT EXISTS `quizgenai`.`classes_quizzes` (
   `Quiz` INT NULL DEFAULT NULL,
   INDEX `Class` (`Class` ASC) VISIBLE,
   INDEX `Quiz` (`Quiz` ASC) VISIBLE,
-  CONSTRAINT `classes_quizzes_ibfk_1`
+  CONSTRAINT `classes_quizzes_classes_fk`
     FOREIGN KEY (`Class`)
-    REFERENCES `quizgenai`.`classes` (`ClassID`),
-  CONSTRAINT `classes_quizzes_ibfk_2`
+    REFERENCES `quizgenai`.`classes` (`ClassID`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `classes_quizzes_quizzes_fk`
     FOREIGN KEY (`Quiz`)
-    REFERENCES `quizgenai`.`quizzes` (`QuizID`))
+    REFERENCES `quizgenai`.`quizzes` (`QuizID`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `quizgenai`.`questions`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`questions` (
+  `Questionid` INT NOT NULL AUTO_INCREMENT,
+  `QuestionText` VARCHAR(512) NULL DEFAULT NULL,
+  `Quiz` INT NULL DEFAULT NULL,
+  `QuestionOrder` INT NULL DEFAULT NULL,
+  `QuestionType` ENUM('MCQ', 'essay') NOT NULL,
+  PRIMARY KEY (`Questionid`),
+  UNIQUE INDEX `Questionid` (`Questionid` ASC, `QuestionOrder` ASC) VISIBLE,
+  INDEX `Quiz` (`Quiz` ASC) VISIBLE,
+  CONSTRAINT `Questions_Quizzes_fk`
+    FOREIGN KEY (`Quiz`)
+    REFERENCES `quizgenai`.`quizzes` (`QuizID`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 0
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `quizgenai`.`essayquestions`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `quizgenai`.`essayquestions` (
+  `Question` INT NOT NULL,
+  `ModelAnswer` VARCHAR(512) NULL DEFAULT NULL,
+  PRIMARY KEY (`Question`),
+  CONSTRAINT `essayquestion_PFK`
+    FOREIGN KEY (`Question`)
+    REFERENCES `quizgenai`.`questions` (`Questionid`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
@@ -127,7 +176,7 @@ CREATE TABLE IF NOT EXISTS `quizgenai`.`students` (
   UNIQUE INDEX `Email` (`Email` ASC) VISIBLE,
   UNIQUE INDEX `PhoneNumber` (`PhoneNumber` ASC) VISIBLE)
 ENGINE = InnoDB
-AUTO_INCREMENT = 64
+AUTO_INCREMENT = 0
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
 
@@ -140,56 +189,23 @@ CREATE TABLE IF NOT EXISTS `quizgenai`.`submissions` (
   `timeSubmitted` DATETIME NULL DEFAULT NULL,
   `quiz` INT NULL DEFAULT NULL,
   `student` INT NULL DEFAULT NULL,
-  `fullMark` INT NULL DEFAULT NULL,
   `studentmark` INT NULL DEFAULT (-1),
   PRIMARY KEY (`SubmissionId`),
   UNIQUE INDEX `auto_Increment` (`SubmissionId` ASC) VISIBLE,
   INDEX `quiz` (`quiz` ASC) VISIBLE,
   INDEX `student` (`student` ASC) VISIBLE,
-  CONSTRAINT `submissions_ibfk_1`
+  CONSTRAINT `submissions_Quizzes_fk`
     FOREIGN KEY (`quiz`)
-    REFERENCES `quizgenai`.`quizzes` (`QuizID`),
-  CONSTRAINT `submissions_ibfk_2`
+    REFERENCES `quizgenai`.`quizzes` (`QuizID`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `submissions_Students_fk`
     FOREIGN KEY (`student`)
-    REFERENCES `quizgenai`.`students` (`StudentID`))
+    REFERENCES `quizgenai`.`students` (`StudentID`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
 ENGINE = InnoDB
-AUTO_INCREMENT = 21
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_0900_ai_ci;
-
-
--- -----------------------------------------------------
--- Table `quizgenai`.`questions`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `quizgenai`.`questions` (
-  `Questionid` INT NOT NULL AUTO_INCREMENT,
-  `QuestionText` VARCHAR(512) NULL DEFAULT NULL,
-  `Quiz` INT NULL DEFAULT NULL,
-  `QuestionOrder` INT NULL DEFAULT NULL,
-  `QuestionType` ENUM('MCQ', 'essay') NOT NULL,
-  PRIMARY KEY (`Questionid`),
-  UNIQUE INDEX `Questionid` (`Questionid` ASC, `QuestionOrder` ASC) VISIBLE,
-  INDEX `Quiz` (`Quiz` ASC) VISIBLE,
-  CONSTRAINT `questions_ibfk_1`
-    FOREIGN KEY (`Quiz`)
-    REFERENCES `quizgenai`.`quizzes` (`QuizID`))
-ENGINE = InnoDB
-AUTO_INCREMENT = 92
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_0900_ai_ci;
-
-
--- -----------------------------------------------------
--- Table `quizgenai`.`essayquestions`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `quizgenai`.`essayquestions` (
-  `Question` INT NOT NULL,
-  `ModelAnswer` VARCHAR(512) NULL DEFAULT NULL,
-  PRIMARY KEY (`Question`),
-  CONSTRAINT `essayquestions_ibfk_1`
-    FOREIGN KEY (`Question`)
-    REFERENCES `quizgenai`.`questions` (`Questionid`))
-ENGINE = InnoDB
+AUTO_INCREMENT = 0
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
 
@@ -205,12 +221,16 @@ CREATE TABLE IF NOT EXISTS `quizgenai`.`essayanswers` (
   `grade` ENUM('<full credit>', '<partial credit>', '<no credit>', '<ungraded>') NULL DEFAULT '<ungraded>',
   INDEX `submission` (`submission` ASC) VISIBLE,
   INDEX `Question` (`Question` ASC) VISIBLE,
-  CONSTRAINT `essayanswers_ibfk_2`
-    FOREIGN KEY (`submission`)
-    REFERENCES `quizgenai`.`submissions` (`SubmissionId`),
-  CONSTRAINT `essayanswers_ibfk_3`
+  CONSTRAINT `essayQuestions_fk`
     FOREIGN KEY (`Question`)
-    REFERENCES `quizgenai`.`essayquestions` (`Question`))
+    REFERENCES `quizgenai`.`essayquestions` (`Question`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `submissions_fk2`
+    FOREIGN KEY (`submission`)
+    REFERENCES `quizgenai`.`submissions` (`SubmissionId`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
@@ -227,12 +247,16 @@ CREATE TABLE IF NOT EXISTS `quizgenai`.`feedback` (
   `DateTimeSent` DATETIME NULL DEFAULT NULL,
   INDEX `Instructor` (`Instructor` ASC) VISIBLE,
   INDEX `Student` (`Student` ASC) VISIBLE,
-  CONSTRAINT `feedback_ibfk_1`
+  CONSTRAINT `feedback_Instructors_fk`
     FOREIGN KEY (`Instructor`)
-    REFERENCES `quizgenai`.`instructors` (`instructorid`),
-  CONSTRAINT `feedback_ibfk_2`
+    REFERENCES `quizgenai`.`instructors` (`instructorid`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `feedback_Students_fk`
     FOREIGN KEY (`Student`)
-    REFERENCES `quizgenai`.`students` (`StudentID`))
+    REFERENCES `quizgenai`.`students` (`StudentID`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
@@ -249,9 +273,11 @@ CREATE TABLE IF NOT EXISTS `quizgenai`.`mcquestions` (
   `AnswerChoice3` VARCHAR(128) NOT NULL,
   `CorrectAnswer` TINYINT NOT NULL,
   PRIMARY KEY (`Question`),
-  CONSTRAINT `mcquestions_ibfk_1`
+  CONSTRAINT `mcQuestion_PFK`
     FOREIGN KEY (`Question`)
-    REFERENCES `quizgenai`.`questions` (`Questionid`))
+    REFERENCES `quizgenai`.`questions` (`Questionid`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
@@ -266,12 +292,16 @@ CREATE TABLE IF NOT EXISTS `quizgenai`.`mcanswers` (
   `question` INT NULL DEFAULT NULL,
   INDEX `submission` (`submission` ASC) VISIBLE,
   INDEX `question` (`question` ASC) VISIBLE,
-  CONSTRAINT `mcanswers_ibfk_1`
-    FOREIGN KEY (`submission`)
-    REFERENCES `quizgenai`.`submissions` (`SubmissionId`),
-  CONSTRAINT `mcanswers_ibfk_2`
+  CONSTRAINT `mcQuestions_fk`
     FOREIGN KEY (`question`)
-    REFERENCES `quizgenai`.`mcquestions` (`Question`))
+    REFERENCES `quizgenai`.`mcquestions` (`Question`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `submissions_fk`
+    FOREIGN KEY (`submission`)
+    REFERENCES `quizgenai`.`submissions` (`SubmissionId`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
@@ -283,14 +313,19 @@ COLLATE = utf8mb4_0900_ai_ci;
 CREATE TABLE IF NOT EXISTS `quizgenai`.`students_classes` (
   `Student` INT NULL DEFAULT NULL,
   `Class` INT NULL DEFAULT NULL,
+  UNIQUE INDEX `uc_Student_Class` (`Student` ASC, `Class` ASC) VISIBLE,
   INDEX `Student` (`Student` ASC) VISIBLE,
   INDEX `Class` (`Class` ASC) VISIBLE,
-  CONSTRAINT `students_classes_ibfk_1`
-    FOREIGN KEY (`Student`)
-    REFERENCES `quizgenai`.`students` (`StudentID`),
-  CONSTRAINT `students_classes_ibfk_2`
+  CONSTRAINT `Students_Classes_Classes_fk`
     FOREIGN KEY (`Class`)
-    REFERENCES `quizgenai`.`classes` (`ClassID`))
+    REFERENCES `quizgenai`.`classes` (`ClassID`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `Students_Classes_Students_fk`
+    FOREIGN KEY (`Student`)
+    REFERENCES `quizgenai`.`students` (`StudentID`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
@@ -306,16 +341,63 @@ CREATE TABLE IF NOT EXISTS `quizgenai`.`trophies` (
   `description` VARCHAR(256) NULL DEFAULT NULL,
   INDEX `class` (`class` ASC) VISIBLE,
   INDEX `student` (`student` ASC) VISIBLE,
-  CONSTRAINT `trophies_ibfk_1`
+  CONSTRAINT `trophies_classes_fk`
     FOREIGN KEY (`class`)
-    REFERENCES `quizgenai`.`classes` (`ClassID`),
-  CONSTRAINT `trophies_ibfk_2`
+    REFERENCES `quizgenai`.`classes` (`ClassID`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `trophies_students_fk`
     FOREIGN KEY (`student`)
-    REFERENCES `quizgenai`.`students` (`StudentID`))
+    REFERENCES `quizgenai`.`students` (`StudentID`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
 
+USE `quizgenai`;
+
+DELIMITER $$
+USE `quizgenai`$$
+CREATE
+DEFINER=`root`@`localhost`
+TRIGGER `quizgenai`.`Student_Class_Removal`
+BEFORE DELETE ON `quizgenai`.`students_classes`
+FOR EACH ROW
+begin
+Delete from Submissions 
+where Student = old.Student and Quiz in ( -- this part selects the quizzes from the removed class
+	Select Quiz From Classes_Quizzes cq 
+    where cq.Class = old.Class
+    and not exists (	-- this part evaluates to false if the student can still access the quiz after class removal
+		Select 1
+        from Classes_Quizzes cq2 inner join Students_classes sc
+        on cq2.class = sc.class
+        where cq.quiz = cq2.quiz
+        and sc.Student = old.Student
+        and sc.Class != old.Class
+    )
+);
+Delete from trophies 
+where student = old.Student and class = old.class;
+
+delete from feedback
+where student = old.student and Instructor in (
+select c.instructor from classes c
+where c.classId = old.class
+and not exists(
+	select 1 from 
+	students_classes sc
+    join classes c2 on sc.Class = c2.ClassID
+    where sc.student = old.Student
+    and sc.class != old.class
+    and c2.Instructor = c.instructor
+    )
+);
+end$$
+
+
+DELIMITER ;
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;

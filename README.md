@@ -9,7 +9,7 @@ For this program to function correctly, you need to do the following:
 
 3 - Open the project in your preferred IDE.
 
-4 - Go to the "Constants" file in the "org.Program" directory(this is the same directory that also includes the "Main" file).
+4 - Go to the "Database" file in the "org.Program" directory(this is the same directory that also includes the "Main" file).
   4.1 - Here, you will find 3 variables: databaseURL, user, and password.
   4.2 - Set the "password" variable to the password you use in your MySQL workbench. This will allow the program to connect to the database.
   4.3 - Also check that the "databaseURL" and "user" are the same as in MySQL workbench(Although you probably won't need to change them).

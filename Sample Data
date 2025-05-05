@@ -41,3 +41,233 @@ INSERT INTO instructors (FirstName, LastName, Email, Password, PhoneNumber) VALU
 ("Faris", "Suleiman", "Faris@gmail.com", "Faris123", "0505000038"),
 ("Rashid", "Taleb", "Rashid@gmail.com", "Rashid123", "0505000039"),
 ("Ilyas", "Uthman", "Ilyas@gmail.com", "Ilyas123", "0505000040");
+
+INSERT INTO CLASSES (ClassName, Instructor, ClassIconPath) VALUES
+('Database Concepts and design', 1, 'C:\Users\User\Desktop\image.png'),
+('Object Oriented Programming', 2, 'C:\Users\User\Pictures\Screenshots\Screenshot (360).png'),
+('Natural Language Processing', 3, 'C:\Users\User\Pictures\Saved Pictures\Class logo.png'),
+('Management Principles and Techniques', 4, 'C:\Users\User\Pictures\Saved Pictures\Management Icon.png'),
+('IT Infrastructure Management', 5, 'C:\Users\User\Downloads\DefaultClassIcon.png');
+
+INSERT INTO STUDENTS_CLASSES (Student, Class) Values
+(1, 1), (2, 1), (3, 1), (4, 1), (6, 1), (9, 1), (14, 1), (22, 1),
+(2, 2), (3, 2), (4, 2), (6, 2), (8, 2), (12, 2),
+(14, 3), (18, 3), (20, 3), (24, 3), (30, 3),
+(3, 4), (5, 4), (10, 4), (17, 4), (26, 4),
+(22, 5), (23, 5), (25, 5), (27, 5), (28, 5), (29, 5);
+
+INSERT INTO EMBEDDINGS(hash) VALUES
+('lcs8FIZrgxUES6qlROKKZQqXQhtttXhGFQLKQf/RydE='),
+('6FF4jrTyxL0WWWgXzLvS7nTWJUxmufidD50ckkTMZXY='), 
+('w8SqcY8i0mQSxbTKgu4hWYqOaPy11W5HSlq6oD5dzWM='), 
+('xjbTfqr9vs4xm6aWxRXg7SH4PejJrtKFSpqsoY06jRo='), 
+('E29Bdeg0oyve6sExFEJU8FbQJTdwFLU7NHEsoDpppz0='), 
+('x9wZZwbfhAAIn7AzmdoH7Uz+2ApWvBnTu/8nZVvfOIY='), 
+('VFD2J1QC8KH2DI+blQLU6+vbXjypN8gDzqAvJPApvE4='), 
+('Ni/8611xme0JhNezDGz/IytZkngSRQHBUNZQahbT4BA='), 
+('gdmz9bgHgltGNc5TjZyYHUDklSXaXzh5HO09xxMuOsM='), 
+('csM+lOoGXl4OR4hePIUjHNLaUi1AtsH7aIsbaSUDwjU=');
+
+INSERT INTO QUIZZES (title, StartDateTime, EndDateTime, Instructor, fullmark, embeddings) VALUES
+('Relational Model Fundamentals - Quiz 1', '2025-05-05 10:00:00', '2025-05-05 11:00:00', 1, 9, 'lcs8FIZrgxUES6qlROKKZQqXQhtttXhGFQLKQf/RydE='),
+('Inheritance and Polymorphism - Quiz 2', '2025-05-06 09:30:00', '2025-05-06 10:15:00', 2, 9, '6FF4jrTyxL0WWWgXzLvS7nTWJUxmufidD50ckkTMZXY='),
+('Text Classification Basics - Quiz 3', '2025-05-07 14:00:00', '2025-05-07 15:00:00', 3, 9, 'w8SqcY8i0mQSxbTKgu4hWYqOaPy11W5HSlq6oD5dzWM='),
+('Leadership Styles - Quiz 4', '2025-05-08 11:00:00', '2025-05-08 12:00:00', 4, 9, 'xjbTfqr9vs4xm6aWxRXg7SH4PejJrtKFSpqsoY06jRo='),
+('Network Topologies - Quiz 5', '2025-05-09 13:00:00', '2025-05-09 14:30:00', 5, 9, 'E29Bdeg0oyve6sExFEJU8FbQJTdwFLU7NHEsoDpppz0='),
+('ER Modeling and Normalization - Quiz 6', '2025-05-10 10:00:00', '2025-05-10 11:30:00', 1, 9, 'x9wZZwbfhAAIn7AzmdoH7Uz+2ApWvBnTu/8nZVvfOIY='),
+('Interfaces and Abstract Classes - Quiz 7', '2025-05-11 09:00:00', '2025-05-11 09:45:00', 2, 9, 'VFD2J1QC8KH2DI+blQLU6+vbXjypN8gDzqAvJPApvE4='),
+('Word Embeddings and Vectors - Quiz 8', '2025-05-12 14:30:00', '2025-05-12 15:15:00', 3, 9, 'Ni/8611xme0JhNezDGz/IytZkngSRQHBUNZQahbT4BA='),
+('Decision-Making Models - Quiz 9', '2025-05-13 12:00:00', '2025-05-13 13:00:00', 4, 9, 'gdmz9bgHgltGNc5TjZyYHUDklSXaXzh5HO09xxMuOsM='),
+('Cloud Infrastructure Basics - Quiz 10', '2025-05-14 13:30:00', '2025-05-14 14:45:00', 5, 9, 'csM+lOoGXl4OR4hePIUjHNLaUi1AtsH7aIsbaSUDwjU=');
+
+-- Relational Model Fundamentals - Quiz 1
+INSERT INTO Questions (QuestionId, QuestionText, Quiz, QuestionOrder, QuestionType) VALUES
+(1, 'Which of the following best defines a relation in the relational model?', 1, 1, 'MCQ'),
+(2, 'What is the primary key in a relational database used for?', 1, 2, 'MCQ'),
+(3, 'Which operation is not part of the relational algebra?', 1, 3, 'MCQ'),
+(4, 'What is a foreign key?', 1, 4, 'MCQ'),
+(5, 'What does normalization aim to achieve in database design?', 1, 5, 'MCQ'),
+(6, 'Discuss the significance of the relational model in ensuring data integrity.', 1, 6, 'essay'),
+(7, 'Explain how keys (primary and foreign) contribute to relational database structure.', 1, 7, 'essay'),
+
+-- Inheritance and Polymorphism - Quiz 2
+(8, 'What does inheritance in object-oriented programming allow you to do?', 2, 1, 'MCQ'),
+(9, 'Which keyword is used in most programming languages to implement inheritance?', 2, 2, 'MCQ'),
+(10, 'What is method overriding?', 2, 3, 'MCQ'),
+(11, 'Which of the following is an example of polymorphism?', 2, 4, 'MCQ'),
+(12, 'Why is multiple inheritance problematic in some languages?', 2, 5, 'MCQ'),
+(13, 'Explain the difference between compile-time and run-time polymorphism.', 2, 6, 'essay'),
+(14, 'Discuss the benefits and potential drawbacks of using inheritance in OOP.', 2, 7, 'essay'),
+
+-- Quiz 3
+(15, 'What is the primary goal of text classification?', 3, 1, 'MCQ'),
+(16, 'Which algorithm is commonly used for text classification?', 3, 2, 'MCQ'),
+(17, 'What is tokenization in NLP?', 3, 3, 'MCQ'),
+(18, 'Which method is used to convert text into numerical vectors?', 3, 4, 'MCQ'),
+(19, 'Which of the following is a labeled dataset example?', 3, 5, 'MCQ'),
+(20, 'Discuss the importance of preprocessing in text classification tasks.', 3, 6, 'essay'),
+(21, 'Explain the difference between supervised and unsupervised text classification.', 3, 7, 'essay'),
+
+-- Quiz 4
+(22, 'What is autocratic leadership?', 4, 1, 'MCQ'),
+(23, 'Which of the following is true about democratic leadership?', 4, 2, 'MCQ'),
+(24, 'Transformational leaders often...', 4, 3, 'MCQ'),
+(25, 'Which leadership style emphasizes task completion over people?', 4, 4, 'MCQ'),
+(26, 'Laissez-faire leadership involves...', 4, 5, 'MCQ'),
+(27, 'Compare and contrast transformational and transactional leadership styles.', 4, 6, 'essay'),
+(28, 'Discuss how leadership style affects team performance and morale.', 4, 7, 'essay'),
+
+-- Quiz 5
+(29, 'Which topology connects each node to a central hub?', 5, 1, 'MCQ'),
+(30, 'Which of the following is a disadvantage of bus topology?', 5, 2, 'MCQ'),
+(31, 'What topology is most fault-tolerant?', 5, 3, 'MCQ'),
+(32, 'Which topology uses point-to-point connections in a closed loop?', 5, 4, 'MCQ'),
+(33, 'What is a key advantage of star topology?', 5, 5, 'MCQ'),
+(34, 'Compare mesh and ring topologies in terms of performance and redundancy.', 5, 6, 'essay'),
+(35, 'Discuss the impact of network topology choice on scalability and maintenance.', 5, 7, 'essay');
+
+-- Quiz 0: MCQs
+INSERT INTO MCQuestions (Question, AnswerChoice0, AnswerChoice1, AnswerChoice2, AnswerChoice3, correctAnswer) VALUES
+(1, 'A set of columns with data types', 'A table with rows and columns', 'A program for storing data', 'A column with unique values', 1),
+(2, 'To store duplicate values', 'To provide a default value', 'To uniquely identify records', 'To join two tables', 2),
+(3, 'Union', 'Select', 'Loop', 'Join', 2),
+(4, 'A key that uniquely identifies a row', 'A key used to connect two tables', 'A duplicate key in a table', 'A reserved keyword in SQL', 1),
+(5, 'Increase redundancy', 'Organize data for optimal searching', 'Split data unnecessarily', 'Make the schema complex', 1),
+
+-- Quiz 1: MCQs
+(8, 'Create new data types', 'Avoid redundant code by reusing classes', 'Write SQL queries', 'Restrict access to variables', 1),
+(9, 'inherits', 'extends', 'super', 'parent', 1),
+(10, 'Calling a method from a superclass', 'Changing a method’s return type', 'Providing a specific implementation of a superclass method in a subclass', 'Declaring a method private', 2),
+(11, 'Creating multiple classes', 'Using many methods in a class', 'Using the same method name with different parameters', 'Writing loops', 2),
+(12, 'It increases speed', 'It simplifies coding', 'It causes ambiguity like the diamond problem', 'It ensures data hiding', 2),
+
+(15, 'Summarize documents', 'Categorize text into predefined labels', 'Translate languages', 'Generate text', 1),
+(16, 'Decision Trees', 'Naive Bayes', 'Linear Regression', 'Apriori Algorithm', 1),
+(17, 'Grouping similar documents', 'Splitting text into smaller units like words', 'Correcting spelling', 'Removing stopwords', 1),
+(18, 'Tokenization', 'Parsing', 'Vectorization', 'Segmentation', 2),
+(19, 'Tweets without hashtags', 'Unlabeled movie reviews', 'Sentiment-tagged product reviews', 'Random sentences', 2),
+
+(22, 'Leader makes all decisions without input', 'Employees vote on every issue', 'Focus on team empowerment', 'No clear leader', 0),
+(23, 'Leaders ignore team opinions', 'Leader centralizes control', 'Encourages group input in decisions', 'Focuses solely on profits', 2),
+(24, 'Create fear among team members', 'Focus on routine tasks', 'Inspire change and motivate employees', 'Avoid responsibility', 2),
+(25, 'Democratic leadership', 'Task-oriented leadership', 'Supportive leadership', 'Delegative leadership', 1),
+(26, 'Hands-off approach with minimal involvement', 'Micromanagement of all tasks', 'Structured planning and control', 'Goal-setting through reward systems', 0),
+
+(29, 'Ring', 'Mesh', 'Star', 'Bus', 2),
+(30, 'High cost', 'Difficult to configure', 'Entire network can fail if main cable breaks', 'Too many routers needed', 2),
+(31, 'Bus', 'Star', 'Mesh', 'Ring', 2),
+(32, 'Ring', 'Mesh', 'Star', 'Tree', 0),
+(33, 'Single point of failure', 'Easy to install and manage', 'High redundancy', 'No central device', 1);
+-- Quiz 0: Essay Questions
+INSERT INTO EssayQuestions (Question, modelAnswer) VALUES
+(6, 'The relational model uses structured tables to enforce data integrity by leveraging constraints, normalization, and keys. It ensures consistency and avoids redundancy.'),
+(7, 'Primary keys uniquely identify records, while foreign keys establish relationships across tables. Together, they ensure referential integrity and robust schema design.'),
+
+-- Quiz 1: Essay Questions
+(13, 'Compile-time polymorphism occurs through method overloading, while run-time polymorphism occurs through method overriding using dynamic dispatch.'),
+(14, 'Inheritance promotes code reuse and logical hierarchy, but if misused, it can lead to tight coupling, fragile base classes, and difficulties in maintenance.'),
+
+(20, 'Preprocessing ensures noise reduction, improves feature quality, and prepares raw text for better model performance.'),
+(21, 'Supervised classification uses labeled data for training, while unsupervised methods cluster text based on similarities without labels.'),
+
+(27, 'Transformational leaders inspire change and vision, while transactional leaders use structure and rewards to maintain performance.'),
+(28, 'Leadership styles affect communication, motivation, and trust levels, directly influencing outcomes and team cohesion.'),
+
+(34, 'Mesh provides full redundancy and high fault tolerance, while ring is simpler but prone to failure if one node breaks.'),
+(35, 'Topology affects how easily new nodes are added and how failures are managed, impacting both cost and reliability.');
+
+INSERT INTO classes_Quizzes(class, quiz) values
+(1, 1), (1, 6),
+(2, 2), (2, 7),
+(3, 3), (3, 8),
+(4, 4), (4, 9),
+(5, 5), (5, 10);
+
+-- Insert a submission (TimeSubmitted randomly selected within quiz window)
+INSERT INTO submissions (TimeSubmitted, quiz, student, studentMark) VALUES
+('2025-05-05 10:34:21', 1, 1, 6),
+('2025-05-05 10:47:58', 1, 2, 4),
+('2025-05-08 11:25:43', 4, 3, 6);
+
+-- Insert MCAnswers (submissionId = 0)
+INSERT INTO MCAnswers (submission, selectedAnswer, question) VALUES
+(1, 1, 1), -- correct (correctAnswer = 1)
+(1, 2, 2), -- correct (correctAnswer = 2)
+(1, 2, 3), -- incorrect (correctAnswer = 2, but let's say student mistakenly chose it)
+(1, 1, 4), -- correct (correctAnswer = 1)
+(1, 0, 5), -- incorrect (correctAnswer = 1)
+-- student Id 1 submission id 1
+(2, 1, 1), -- correct (correctAnswer = 1)
+(2, 3, 2), -- incorrect (correctAnswer = 2)
+(2, 2, 3), -- correct (correctAnswer = 2)
+(2, 0, 4), -- incorrect (correctAnswer = 1)
+(2, 1, 5), -- correct (correctAnswer = 1)
+-- student id 2, submission id 2
+(3, 0, 22), -- correct (correctAnswer = 0)
+(3, 2, 23), -- correct (correctAnswer = 2)
+(3, 3, 24), -- incorrect (correctAnswer = 2)
+(3, 1, 25), -- correct (correctAnswer = 1)
+(3, 1, 26); -- incorrect (correctAnswer = 0)
+
+-- Insert EssayAnswers (submissionId = 0)
+INSERT INTO EssayAnswers (submission, question, answerText, grade, justification) VALUES
+(1, 6, 
+ 'The relational model helps ensure data integrity by enforcing rules through keys and constraints. This avoids redundancy and promotes consistency.', 
+ '<full credit>', 
+ 'The student provided a thorough explanation referencing integrity, redundancy, and keys.'),
+(1, 7, 
+ 'Keys are important. Primary keys identify rows. Foreign keys connect tables.', 
+ '<partial credit>', 
+ 'The answer identifies key concepts correctly but lacks depth and detailed explanation.'),
+ -- stubmission id 2
+ (2, 6, 
+ 'The relational model helps structure data but doesn’t always prevent errors.', 
+ '<partial credit>', 
+ 'Student touched on structure but did not discuss integrity or redundancy.'),
+(2, 7, 
+ 'Primary and foreign keys help maintain order in the database.', 
+ '<no credit>', 
+ 'The answer lacks technical explanation and does not address uniqueness or referential integrity.'),
+ -- submission id 3
+ (3, 27, 
+ 'Transformational leaders focus on change and inspiration, while transactional ones offer rewards for tasks. They differ in vision and motivation.', 
+ '<full credit>', 
+ 'Student clearly distinguished the core philosophies and mechanisms of each style.'),
+(3, 28, 
+ 'Leadership style matters. Teams perform better when they feel heard and supported, but too much control can lower morale.', 
+ '<partial credit>', 
+ 'Answer is directionally accurate but lacks clarity and specific examples or mechanisms.');
+ 
+ INSERT INTO feedback(instructor, student, subjectLine, messageText, DateTimeSent) VALUES
+(1, 1, 'Good Start on Relational Model', 
+ 'You answered most of the multiple-choice questions correctly. Keep working on strengthening your essay responses with more depth.', 
+ '2025-05-05 12:10:00'),
+(1, 2, 'Review Essay Writing Techniques', 
+ 'Your understanding of the MCQs is improving, but the essay section lacked technical detail. I recommend reviewing the examples discussed in class.', 
+ '2025-05-05 12:20:00'),
+(4, 3, 'Leadership Styles - Detailed Feedback', 
+ 'Great work identifying the leadership types in the MCQs. Your comparison of transformational and transactional leadership was particularly strong.', 
+ '2025-05-08 12:30:00'),
+(3, 20, 'Excellent Work on Parsing Exercise', 
+ 'Well done on the dependency parsing exercise. Your results were accurate, and your code was clean. Keep it up!', 
+ '2025-05-02 10:00:00'),
+(5, 22, 'Upcoming Lab on Virtualization', 
+ 'We will cover virtualization in the next lab session. Please review the reading on hypervisors before class.', 
+ '2025-05-02 11:10:00'),
+(2, 6, 'Polymorphism Concept Clarified', 
+ 'In response to your question: Polymorphism allows objects to be treated as instances of their parent class while invoking subclass-specific behavior. We will explore this further next week.', 
+ '2025-05-02 12:00:00');
+ 
+INSERT INTO trophies (class, Student, imagePath, description) VALUES
+(1, 1, 'C:\\Users\\User\\Pictures\\Trophies\\GoldenCup.jpg', 'Awarded for achieving the highest score in the Relational Model Fundamentals quiz.'),
+(1, 2, 'C:\\Users\\User\\Pictures\\Trophies\\StarMedal.png', 'Recognized for showing significant improvement between the first and second assessments.'),
+(3, 13, 'C:\\Users\\User\\Pictures\\Trophies\\LightningSparkMedal.png', 'Consistent top performer in Object Oriented Programming assignments.'),
+(4, 3, 'C:\\Users\\User\\Pictures\\Trophies\\TripleStarBadge.png', 'Excellent leadership in the team-based leadership styles case study.'),
+(5, 22, 'C:\\Users\\User\\Pictures\\Trophies\\GoldenCup.jpg', 'Recognized for insightful contributions during IT infrastructure discussions.'),
+(2, 12, 'C:\\Users\\User\\Pictures\\Trophies\\LightningSparkMedal.png', 'Perfect attendance and participation in class discussions.'),
+(5, 28, 'C:\\Users\\User\\Pictures\\Trophies\\StarMedal.png', 'Earned the highest lab score average across all IT Infrastructure labs.');
+
+
+ 
+
+

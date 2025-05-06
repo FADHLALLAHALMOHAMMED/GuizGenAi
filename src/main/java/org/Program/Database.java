@@ -164,7 +164,8 @@ public class Database {
         return new Class(
                 resultSet.getInt(1),
                 resultSet.getString(2),
-                resultSet.getString(3)
+                resultSet.getString(3),
+                resultSet.getInt(4)
         );
     }
 
@@ -242,7 +243,7 @@ public class Database {
     public static Vector<Class> getInstructorClasses(int instructorId){
         Vector<Class> classes = new Vector<>();
         String getClassesDML = """
-                select ClassId, ClassName, classIconPath
+                select ClassId, ClassName, classIconPath, Instructor
                 from classes
                 where instructor = ?;
                 """;
@@ -267,7 +268,7 @@ public class Database {
     public static Vector<Class> getStudentClasses(int StudentId){
         Vector<Class> classes = new Vector<>();
         String getClassesDML = """
-                select c.classId, c.classname, c.classIconPath
+                select c.classId, c.classname, c.classIconPath, c.Instructor
                 from classes c right join students_classes sc
                 on c.ClassID = sc.Class
                 where sc.student = ?;
@@ -648,12 +649,24 @@ public class Database {
 
     public static void getQuizzesByClass(int classId, int studentId, Vector<Quiz> quizzes, Vector<Submission> submissions){
         String getQuizzesDML = """
-                    select q.quizId, q.Title, q.StartDateTime, q.EndDateTime, q.instructor,
-                    s.submissionId, s.timeSubmitted, s.StudentMark, q.FullMark
-                    from quizzes q left join submissions s
-                    on q.quizId = s.quiz and s.student = ?
-                    where q.quizID in
-                    (select quizId from classes_quizzes where class = ?)
+                SELECT
+                    q.quizId,
+                    q.Title,
+                    q.StartDateTime,
+                    q.EndDateTime,
+                    q.instructor,
+                    s.submissionId,
+                    s.timeSubmitted,
+                    s.StudentMark,
+                    q.FullMark
+                FROM
+                    quizzes q
+                LEFT JOIN
+                    submissions s ON q.quizId = s.quiz AND s.student = ?
+                INNER JOIN
+                    classes_quizzes cq ON q.quizId = cq.quiz
+                WHERE
+                    cq.class = ?;
                     """;
         try(
                 Connection connection = getConnection();
@@ -1346,7 +1359,7 @@ public class Database {
                         rs.getInt("Student"),
                         rs.getString("SubjectLine"),
                         rs.getString("MessageText"),
-                        rs.getString("DateTimeSent")
+                        rs.getTimestamp("DateTimeSent")
                 );
                 feedbackList.add(feedback);
             }
@@ -1355,5 +1368,145 @@ public class Database {
             e.printStackTrace();
         }
         return feedbackList;
+    }
+
+    public static List<Feedback> getFeedbackForStudentInClass(int studentId, int instructorId) {
+        List<Feedback> feedbackList = new ArrayList<>();
+        String query = """
+                SELECT * FROM Feedback
+                WHERE Student = ? and instructor = ?
+                ORDER BY DateTimeSent DESC
+                """;
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, studentId);
+            stmt.setInt(2, instructorId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                Feedback feedback = new Feedback(
+                        rs.getInt("Instructor"),
+                        rs.getInt("Student"),
+                        rs.getString("SubjectLine"),
+                        rs.getString("MessageText"),
+                        rs.getTimestamp("DateTimeSent")
+                );
+                feedbackList.add(feedback);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return feedbackList;
+    }
+
+    public static List<IndividualQuizStatistics> getMCQSAnswersPerQuiz(int quizNumber){
+        List<IndividualQuizStatistics> statistics = new ArrayList<>();
+        String getMCQSAnswersPerQuizDML = """
+                select q.questionText, q.questionType,
+                AVG(case when mcq.correctAnswer = ma.selectedAnswer then 1 else 0 end) as CorrectPercent
+                from MCAnswers ma left join Questions q
+                left join mcquestions mcq on mcq.question = q.Questionid
+                on ma.question = q.questionid
+                left join Quizzes qz on q.quiz = qz.quizId
+                where quiz = ?
+                group by questionId;
+                    """;
+        try(
+                Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(getMCQSAnswersPerQuizDML)
+        ){
+
+            ps.setInt(1, quizNumber);
+
+
+            try(ResultSet rs = ps.executeQuery()){
+                while(rs.next()) {
+                    IndividualQuizStatistics stat = new IndividualQuizStatistics(
+                            rs.getString("questionType"),
+                            rs.getString("questionText"),
+                            rs.getDouble("CorrectPercent")
+                    );
+                    statistics.add(stat);
+                }
+            }
+
+        }catch(SQLException e){
+            System.out.println(e.getMessage());
+        }
+        return statistics;
+    }
+
+
+    public static List<IndividualQuizStatistics> getEssayAnswersPerQuiz(int quizNumber) {
+        List<IndividualQuizStatistics> statistics = new ArrayList<>();
+        String sql = """
+        SELECT q.QuestionText, q.questionType,
+               AVG(CASE WHEN ea.grade = '<full credit>' THEN 1 ELSE 0 END) AS FullCredit,
+               AVG(CASE WHEN ea.grade = '<partial credit>' THEN 1 ELSE 0 END) AS PartialCredit,
+               AVG(CASE WHEN ea.grade = '<no credit>' THEN 1 ELSE 0 END) AS NoCredit
+        FROM essayquestions eq
+        LEFT JOIN Questions q on eq.question = q.QuestionId
+        LEFT JOIN essayanswers ea ON ea.question = q.questionId
+        WHERE q.quiz = ?
+        GROUP BY q.Questionid, q.QuestionText, q.questionType;
+        """;
+
+        try (Connection connection = getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+
+            ps.setInt(1, quizNumber);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    IndividualQuizStatistics stat = new IndividualQuizStatistics(
+                            rs.getString("questionType"),
+                            rs.getString("QuestionText"),
+                            rs.getDouble("FullCredit"),
+                            rs.getDouble("PartialCredit"),
+                            rs.getDouble("NoCredit")
+                    );
+                    statistics.add(stat);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving essay answers: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return statistics;
+    }
+
+public static List<Quiz> getOverallQuizStatistics(int classId) {
+        List<Quiz> statistics = new ArrayList<>();
+        String sql = """
+                SELECT q.QuizID, q.Title, COUNT(s.SubmissionId) count, AVG(s.studentmark) as avg, MAX(s.studentmark) as max, MIN(s.studentmark) as min
+                FROM quizzes q
+                JOIN classes_quizzes cq ON cq.Quiz = q.QuizID
+                LEFT JOIN submissions s ON s.quiz = q.QuizID
+                where q.quizId in (select quiz from classes_quizzes where class = ?)
+                GROUP BY q.QuizID
+                """;
+
+        try (Connection connection = getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+
+            ps.setInt(1, classId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Quiz quiz = new Quiz(rs.getInt("QuizID"));
+                    quiz.title = rs.getString("Title");
+                    quiz.average = rs.getDouble("avg");
+                    quiz.count = rs.getInt("avg");
+                    quiz.min = rs.getInt("avg");
+                    quiz.max = rs.getInt("avg");
+                    statistics.add(quiz);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving statistics: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return statistics;
     }
 }

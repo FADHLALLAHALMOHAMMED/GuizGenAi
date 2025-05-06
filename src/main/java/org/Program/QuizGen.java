@@ -10,6 +10,7 @@ import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.model.embedding.onnx.allminilml6v2.AllMiniLmL6V2EmbeddingModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.model.huggingface.HuggingFaceEmbeddingModel;
 import dev.langchain4j.model.output.Response;
@@ -109,11 +110,15 @@ public class QuizGen implements Runnable{
             } catch (Exception e) {
                 if (e.getMessage().matches("503")) {
                     // control will reach here if the embedding API fails.
+                    System.out.println(e.getMessage());
+                    e.printStackTrace();
                     System.out.printf("Embedding service unavailable: retrying(%d/3) \n", retries+1);
                     // if the API fails the loop will try 2 more times, then give up and show an error message.
                 } else {
                     // control will reach here in case of unexpected error or user pressing cancel in waiting Page.
-                    System.out.println("Thread1 Successfully interrupted: " + e);
+                    System.out.println("Thread1 Successfully interrupted: ");
+                    System.out.println(e.getMessage());
+                    e.printStackTrace();
                     window.switchPage(new InstructorHomePage(window));
                     filePath = null;
                     return;
@@ -159,7 +164,7 @@ public class QuizGen implements Runnable{
      * @return a ContentRetriever that has the embeddings of this document.
      */
     public static ContentRetriever createVectorStore(String filepath, String hash, EmbeddingModel embeddingModel){
-        try {
+//        try {
             // todo: The parsed text has a lot of copyright labels e.g., "© COPYRIGHT 1992-2015 BY PEARSON EDUCATION,INC. ALL RIGHTS RESERVED."
             //  see if there is a setting in the parser to remove them can be removed. regardless, LLM output is satisfactory even with them.
             Document document = FileSystemDocumentLoader.loadDocument(filepath, new ApacheTikaDocumentParser()); // parse the document, get the text
@@ -178,9 +183,11 @@ public class QuizGen implements Runnable{
                     .minScore(0.0)
                     .build();
 
-        }catch(Exception e){
-            throw new RuntimeException("VectorStore creation failed.");
-        }
+//        }catch(Exception e){
+//            System.out.println(e.getMessage());
+//            e.printStackTrace();
+//            throw new RuntimeException("VectorStore creation failed.");
+//        }
     }
 
     /**
@@ -195,12 +202,13 @@ public class QuizGen implements Runnable{
      */
     public static ContentRetriever getVectorStore(String filepath){
         try {
-            EmbeddingModel embeddingModel = HuggingFaceEmbeddingModel.builder()
-                    .accessToken(Constants.huggingFaceAPIKey)
-                    .modelId("sentence-transformers/all-MiniLM-L6-v2")
-                    .waitForModel(true)
-                    .timeout(ofSeconds(60))
-                    .build();
+//            EmbeddingModel embeddingModel = HuggingFaceEmbeddingModel.builder()
+//                    .accessToken(Constants.huggingFaceAPIKey)
+//                    .modelId("sentence-transformers/all-MiniLM-L6-v2")
+//                    .waitForModel(true)
+//                    .timeout(ofSeconds(60))
+//                    .build();
+            EmbeddingModel embeddingModel = new AllMiniLmL6V2EmbeddingModel();
 
             String hash = getHash(filepath); // get the hash of the document
             QuizGen.documentHash = hash;
@@ -236,12 +244,7 @@ public class QuizGen implements Runnable{
                 }
                 System.out.println(prompt);
 
-                EmbeddingModel embeddingModel = HuggingFaceEmbeddingModel.builder()
-                        .accessToken(Constants.huggingFaceAPIKey)
-                        .modelId("sentence-transformers/all-MiniLM-L6-v2")
-                        .waitForModel(true)
-                        .timeout(ofSeconds(60))
-                        .build();
+                EmbeddingModel embeddingModel = new AllMiniLmL6V2EmbeddingModel();
                 System.out.println("reached point 2");
 
                 ContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder() // return match
@@ -272,12 +275,16 @@ public class QuizGen implements Runnable{
 
             } catch (Exception e) {
                 if (e.getMessage().matches("503")) {
+                    System.out.println(e.getMessage());
+                    e.printStackTrace();
                     // control will reach here if the embedding API fails.
                     System.out.printf("Embedding service unavailable: retrying(%d/3) \n", retries+1);
                     // if the API fails the loop will try 2 more times, then give up.
                 } else {
                     // control will reach here in case of an unexpected error.
-                    System.out.println("Grading Exception" + e);
+                    System.out.println("Grading Exception");
+                    System.out.println(e.getMessage());
+                    e.printStackTrace();
                     return null;
                 }
             }

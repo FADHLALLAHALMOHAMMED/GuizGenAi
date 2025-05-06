@@ -10,6 +10,13 @@ public class Quiz {
     public Date endDateTime;
     public int instructorId;
     public Vector<Question> questions;
+    public double average;
+    public int count;
+    public int min;
+    public int max;
+    public Quiz(int id){
+        this.id = id;
+    }
     public Quiz(int id, String title, Date startDateTime, Date endDateTime, int instructorId) {
         this.id = id;
         this.title = title;

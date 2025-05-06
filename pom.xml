@@ -63,6 +63,12 @@
             <version>9.2.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-embeddings-all-minilm-l6-v2</artifactId>
+            <version>1.0.0-beta4</version>
+        </dependency>
+
 
     </dependencies>
 </project>

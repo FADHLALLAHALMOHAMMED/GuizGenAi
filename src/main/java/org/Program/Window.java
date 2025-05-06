@@ -5,6 +5,7 @@ import org.Program.Entities.Class;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URL;
 import java.util.Date;
 import java.util.Vector;
 
@@ -18,7 +19,9 @@ public class Window extends JFrame{
     public Quiz quiz;
     Window(){
         this.setTitle("QuizGenAI");
-        this.setIconImage((new ImageIcon("FancyR.png").getImage()));
+        URL url = getClass().getResource("/images/logo.png");
+        if(url != null)
+            this.setIconImage(new ImageIcon(url).getImage());
         this.setSize(1200, 800);
         this.setResizable(false);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

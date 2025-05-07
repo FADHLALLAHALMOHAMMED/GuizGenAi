@@ -1901,14 +1901,14 @@ class InstructorViewStudentSubmissionsTab extends JPanel{
 
         QuizDisplayTable table = new QuizDisplayTable(window, quizzes, submissions);
 
-        JScrollPane quizzesScrollPane = new JScrollPane(table);
-        quizzesScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        quizzesScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        quizzesScrollPane.setPreferredSize(new Dimension(800, 450));
-        quizzesScrollPane.setOpaque(true);
-        quizzesScrollPane.setBackground(Color.WHITE);
-        this.add(quizzesScrollPane, c);
-//        this.add(new JScrollPane(table), c);
+//        JScrollPane quizzesScrollPane = new JScrollPane(table);
+//        quizzesScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+//        quizzesScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+//        quizzesScrollPane.setPreferredSize(new Dimension(800, 450));
+//        quizzesScrollPane.setOpaque(true);
+//        quizzesScrollPane.setBackground(Color.WHITE);
+//        this.add(quizzesScrollPane, c);
+        this.add(table, c);
     }
 }
 

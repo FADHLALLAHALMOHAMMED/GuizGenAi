@@ -19,7 +19,7 @@ import java.util.Vector;
 public class Database {
     public static final String databaseURL = "jdbc:mysql://localhost:3306/QuizGenAI";
     public static final String user = "root";
-    public static final String password = "system";
+    public static final String password = "System";
     public static Connection getConnection(){
         try{
             return DriverManager.getConnection(databaseURL, user, password);

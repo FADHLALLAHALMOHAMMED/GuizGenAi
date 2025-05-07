@@ -787,8 +787,8 @@ class QuizPage extends Page{
         c.insets = new Insets(10, 23, 23, 5);
         c.gridwidth = 1;
         c.gridy++;
-        contentPanel.add(backButton, c);
-        c.gridx++;
+//        contentPanel.add(backButton, c);
+//        c.gridx++;
         
         c.insets = new Insets(10, 5, 23, 23);
         contentPanel.add(submitButton, c);
